@@ -1,0 +1,40 @@
+# ¡Twins! Supabase project config. The project_id is the linked project's ref.
+# Run `supabase link --project-ref lgxfmapeuwvltgeixnib` before db push / deploy.
+project_id = "lgxfmapeuwvltgeixnib"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+# Deep-link / redirect targets used by the app's magic-link + password reset.
+site_url = "twins://auth-callback"
+additional_redirect_urls = ["twins://auth-callback", "http://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+# resolve-link enriches pasted URLs (oEmbed/OpenGraph + optional Groq polish).
+# verify_jwt = true means only signed-in users can call it.
+[functions.resolve-link]
+verify_jwt = true
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"

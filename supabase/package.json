@@ -1,0 +1,15 @@
+{
+  "name": "twins-supabase-seed",
+  "private": true,
+  "type": "module",
+  "description": "Cloud seed tooling for the ¡Twins! Supabase backend.",
+  "scripts": {
+    "seed": "tsx seed.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
