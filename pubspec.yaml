@@ -137,7 +137,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
     - assets/
 
   # Bundled rather than fetched at runtime so the brand type is present on
