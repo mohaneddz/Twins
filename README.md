@@ -1,4 +1,7 @@
-# ¡Twins!
+<h1>
+  <img src="assets/icon_no_bg.png" alt="¡Twins! icon" width="50" />
+  ¡Twins!
+</h1>
 
 A private shared digital space for exactly two people. Save reels, TikToks,
 YouTube videos, links, notes, images, and files from anywhere on your phone
@@ -9,6 +12,20 @@ keep a lightweight running chat together.
 Think: Pinterest + Discord threads + a private scrapbook + a shared drive,
 built for exactly two people. Not a social network — no followers, no public
 feed, no discovery.
+
+## App pages
+
+| Welcome | Login |
+| --- | --- |
+| <img src="design/01_Welcome.png" alt="Twins welcome screen" width="260" /> | <img src="design/02_Login.png" alt="Twins login screen" width="260" /> |
+| Home dashboard | Folder view |
+| <img src="design/03_Home_Dashboard.png" alt="Twins home dashboard" width="260" /> | <img src="design/04_Folder_View.png" alt="Twins folder view" width="260" /> |
+| Item detail | Add item |
+| <img src="design/05_Item_Detail.png" alt="Twins item detail" width="260" /> | <img src="design/06_Add_New_Item.png" alt="Twins add item screen" width="260" /> |
+| Chat | Search & explore |
+| <img src="design/07_Chat_Conversation.png" alt="Twins chat screen" width="260" /> | <img src="design/08_Search_Explore.png" alt="Twins search screen" width="260" /> |
+| Profile | Settings |
+| <img src="design/09_Profile.png" alt="Twins profile screen" width="260" /> | <img src="design/10_Settings.png" alt="Twins settings screen" width="260" /> |
 
 ## Architecture
 
