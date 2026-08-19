@@ -114,6 +114,7 @@ class SettingsScreen extends ConsumerWidget {
       message: 'Folders and items from the file will be added to this space. Comments and chat history are not '
           'part of a backup and stay behind.',
       confirmLabel: 'Choose file',
+      danger: false,
     );
     if (!confirmed) return;
 

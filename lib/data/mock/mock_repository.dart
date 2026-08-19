@@ -612,8 +612,28 @@ class MockTwinsRepository implements TwinsRepository {
     await _delay();
     return {
       'space': {'id': MockSeed.space.id, 'name': MockSeed.space.name},
-      'folders': _folders.map((f) => f.toJson()).toList(),
-      'items': _items.map((i) => i.toJson()).toList(),
+      // fromJson() (used by import) needs id/created_at/updated_at, which
+      // toJson() omits since it's shaped for inserts - so folders/items are
+      // rebuilt as full rows here, matching what a real Supabase select()
+      // returns in SupabaseTwinsRepository.exportSpace.
+      'folders': _folders
+          .map((f) => {
+                ...f.toJson(),
+                'id': f.id,
+                'created_by': f.createdBy,
+                'created_at': f.createdAt.toIso8601String(),
+                'updated_at': f.updatedAt.toIso8601String(),
+              })
+          .toList(),
+      'items': _items
+          .map((i) => {
+                ...i.toJson(),
+                'id': i.id,
+                'created_by': i.createdBy,
+                'created_at': i.createdAt.toIso8601String(),
+                'updated_at': i.updatedAt.toIso8601String(),
+              })
+          .toList(),
       'comments': _comments.map((c) => c.toJson()).toList(),
       'messages': _messages.map((m) => m.toJson()).toList(),
     };
