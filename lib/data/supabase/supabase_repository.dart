@@ -5,6 +5,7 @@ import 'package:mime/mime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models/chat.dart';
 import '../models/comment.dart';
 import '../models/folder.dart';
 import '../models/item.dart';
@@ -470,26 +471,72 @@ class SupabaseTwinsRepository implements TwinsRepository {
     return TwinsComment.fromJson(row);
   }
 
+  // ---- Chats ----
+  @override
+  Stream<List<TwinsChat>> watchChats(String spaceId) {
+    return supa.from('chats').stream(primaryKey: ['id']).eq('space_id', spaceId).map(
+        (rows) => rows.map(TwinsChat.fromJson).toList()..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)));
+  }
+
+  @override
+  Future<TwinsChat> createChat({required String spaceId, String? name}) async {
+    final row = await supa
+        .from('chats')
+        .insert({
+          'space_id': spaceId,
+          'name': name,
+          'created_by': supa.auth.currentUser!.id,
+        })
+        .select()
+        .single();
+    return TwinsChat.fromJson(row);
+  }
+
+  @override
+  Future<TwinsChat> renameChat(String chatId, String name) async {
+    final row = await supa.from('chats').update({'name': name}).eq('id', chatId).select().single();
+    return TwinsChat.fromJson(row);
+  }
+
+  @override
+  Future<void> deleteChat(String chatId) => supa.from('chats').delete().eq('id', chatId);
+
   // ---- Messages ----
   @override
-  Stream<List<TwinsMessage>> watchMessages(String spaceId) {
-    return supa.from('messages').stream(primaryKey: ['id']).eq('space_id', spaceId).map(
+  Stream<List<TwinsMessage>> watchMessages(String chatId) {
+    return supa.from('messages').stream(primaryKey: ['id']).eq('chat_id', chatId).map(
         (rows) => rows.map(TwinsMessage.fromJson).toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt)));
   }
 
   @override
-  Future<TwinsMessage> sendMessage({required String spaceId, required String body, String? attachedItemId}) async {
+  Future<TwinsMessage> sendMessage({
+    required String spaceId,
+    required String chatId,
+    required String body,
+    String? attachedItemId,
+  }) async {
     final row = await supa
         .from('messages')
         .insert({
           'space_id': spaceId,
+          'chat_id': chatId,
           'author_id': supa.auth.currentUser!.id,
           'body': body,
           'attached_item_id': attachedItemId,
         })
         .select()
         .single();
+    // Bump the chat's updated_at so the chat list resorts by recency.
+    await supa.from('chats').update({'updated_at': DateTime.now().toIso8601String()}).eq('id', chatId);
     return TwinsMessage.fromJson(row);
+  }
+
+  @override
+  Stream<List<TwinsMessage>> watchRecentMessages(String spaceId, {int limit = 15}) {
+    return supa.from('messages').stream(primaryKey: ['id']).eq('space_id', spaceId).map((rows) {
+      final sorted = rows.map(TwinsMessage.fromJson).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return sorted.take(limit).toList();
+    });
   }
 
   // ---- Reactions ----

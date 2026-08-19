@@ -1,3 +1,4 @@
+import '../models/chat.dart';
 import '../models/comment.dart';
 import '../models/folder.dart';
 import '../models/item.dart';
@@ -106,9 +107,20 @@ abstract class TwinsRepository {
     int? mediaTimestampMs,
   });
 
-  // ---- Messages (Twins chat) ----
-  Stream<List<TwinsMessage>> watchMessages(String spaceId);
-  Future<TwinsMessage> sendMessage({required String spaceId, required String body, String? attachedItemId});
+  // ---- Chats ----
+  /// A space's chat threads, most recently active first.
+  Stream<List<TwinsChat>> watchChats(String spaceId);
+  Future<TwinsChat> createChat({required String spaceId, String? name});
+  Future<TwinsChat> renameChat(String chatId, String name);
+  Future<void> deleteChat(String chatId);
+
+  // ---- Messages ----
+  Stream<List<TwinsMessage>> watchMessages(String chatId);
+  Future<TwinsMessage> sendMessage({required String spaceId, required String chatId, required String body, String? attachedItemId});
+
+  /// Most recent messages across every chat in the space - used by the
+  /// space-wide activity feed rather than a single thread's view.
+  Stream<List<TwinsMessage>> watchRecentMessages(String spaceId, {int limit = 15});
 
   // ---- Reactions ----
   Stream<List<TwinsReaction>> watchReactions(String spaceId, ReactionTargetType type, String targetId);

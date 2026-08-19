@@ -1,4 +1,5 @@
 import '../../theme/colors.dart';
+import '../models/chat.dart';
 import '../models/comment.dart';
 import '../models/folder.dart';
 import '../models/item.dart';
@@ -286,10 +287,22 @@ class MockSeed {
     ),
   ];
 
+  static final chats = <TwinsChat>[
+    TwinsChat(
+      id: 'chat-1',
+      spaceId: spaceId,
+      name: 'Cat content 🐈',
+      createdBy: meId,
+      createdAt: DateTime.now().subtract(const Duration(minutes: 40)),
+      updatedAt: DateTime.now().subtract(const Duration(minutes: 37)),
+    ),
+  ];
+
   static final messages = <TwinsMessage>[
     TwinsMessage(
       id: 'm1',
       spaceId: spaceId,
+      chatId: 'chat-1',
       authorId: meId,
       body: 'I need this cat in my life 🐈',
       createdAt: DateTime.now().subtract(const Duration(minutes: 40)),
@@ -297,6 +310,7 @@ class MockSeed {
     TwinsMessage(
       id: 'm2',
       spaceId: spaceId,
+      chatId: 'chat-1',
       authorId: twinId,
       body: 'same... look at that little face 🥺💜',
       createdAt: DateTime.now().subtract(const Duration(minutes: 39)),
@@ -304,6 +318,7 @@ class MockSeed {
     TwinsMessage(
       id: 'm3',
       spaceId: spaceId,
+      chatId: 'chat-1',
       authorId: meId,
       body: 'hahaha twins brain ✨',
       createdAt: DateTime.now().subtract(const Duration(minutes: 38)),
@@ -311,6 +326,7 @@ class MockSeed {
     TwinsMessage(
       id: 'm4',
       spaceId: spaceId,
+      chatId: 'chat-1',
       authorId: twinId,
       body: 'already added to Funny Reels 🙂',
       attachedItemId: 'item-2',

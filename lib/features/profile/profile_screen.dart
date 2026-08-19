@@ -27,12 +27,12 @@ class ProfileScreen extends ConsumerWidget {
             final membersAsync = ref.watch(spaceMembersProvider(space.id));
             final foldersAsync = ref.watch(foldersProvider(FolderQuery(space.id, null)));
             final itemsAsync = ref.watch(allItemsProvider(space.id));
-            final messagesAsync = ref.watch(messagesProvider(space.id));
+            final chatsAsync = ref.watch(chatsProvider(space.id));
 
             final folderCount = foldersAsync.valueOrNull?.length ?? 0;
             final itemCount = itemsAsync.valueOrNull?.length ?? 0;
             final noteCount = itemsAsync.valueOrNull?.where((i) => i.type == ItemType.note).length ?? 0;
-            final chatCount = messagesAsync.valueOrNull?.length ?? 0;
+            final chatCount = chatsAsync.valueOrNull?.length ?? 0;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(TwinsSpacing.lg),

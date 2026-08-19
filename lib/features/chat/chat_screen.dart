@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../data/ai/chat_namer.dart';
+import '../../data/models/chat.dart';
 import '../../data/models/item.dart';
 import '../../data/models/message.dart';
 import '../../data/models/profile.dart';
@@ -13,15 +15,19 @@ import '../../theme/palette.dart';
 import '../../theme/colors.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/avatars.dart';
 import '../../widgets/chat_bubble.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/item_card.dart';
 import '../../widgets/reaction_bar.dart';
 import '../../widgets/twins_bottom_sheet.dart';
+import 'chat_list_screen.dart';
+
+/// Messages so far before naming is worth attempting.
+const _autoNameThreshold = 3;
 
 class ChatScreen extends ConsumerStatefulWidget {
-  const ChatScreen({super.key});
+  final String chatId;
+  const ChatScreen({super.key, required this.chatId});
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -30,6 +36,7 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
+  bool _naming = false;
 
   @override
   void dispose() {
@@ -49,19 +56,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           data: (space) {
             if (space == null) return const SizedBox.shrink();
             final membersAsync = ref.watch(spaceMembersProvider(space.id));
+            final chatsAsync = ref.watch(chatsProvider(space.id));
+            final chat = chatsAsync.valueOrNull?.firstWhere(
+              (c) => c.id == widget.chatId,
+              orElse: () => TwinsChat(
+                id: widget.chatId,
+                spaceId: space.id,
+                createdBy: me?.id ?? '',
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              ),
+            );
             return Column(
               children: [
-                membersAsync.when(
-                  data: (members) => _ChatHeader(members: members, meId: me?.id, spaceName: space.name),
-                  loading: () => const SizedBox(height: 56),
-                  error: (e, _) => const SizedBox.shrink(),
-                ),
+                _ChatHeader(chat: chat, onRename: chat == null ? null : () => showRenameChatSheet(context, ref, chat)),
                 const Divider(height: 1),
                 Expanded(
                   child: Consumer(builder: (context, ref, _) {
-                    final messagesAsync = ref.watch(messagesProvider(space.id));
+                    final messagesAsync = ref.watch(messagesProvider(widget.chatId));
                     return messagesAsync.when(
                       data: (messages) {
+                        if (chat != null) _maybeAutoName(chat, messages);
                         if (messages.isEmpty) {
                           return const EmptyState(emoji: '💬', title: 'Say hi to start the conversation');
                         }
@@ -107,7 +122,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                   child: Row(
                     children: [
-                      IconButton(icon: const Icon(PhosphorIconsBold.plus, color: TwinsColors.mikuGreen), onPressed: () => _showAttachMenu(space.id)),
+                      IconButton(
+                        icon: const Icon(PhosphorIconsBold.plus, color: TwinsColors.mikuGreen),
+                        onPressed: () => _showAttachMenu(space.id),
+                      ),
                       Expanded(
                         child: TextField(
                           controller: _controller,
@@ -137,11 +155,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
+  /// Fires once per unnamed chat, the first time it reaches
+  /// [_autoNameThreshold] messages. Renaming after that is manual only
+  /// (`chat.name` stops being null), so this never re-fires or fights a
+  /// name the twins picked themselves.
+  Future<void> _maybeAutoName(TwinsChat chat, List<TwinsMessage> messages) async {
+    if (_naming || chat.name != null || messages.length < _autoNameThreshold) return;
+    _naming = true;
+    final name = await suggestChatName(messages.take(10).map((m) => m.body).toList());
+    if (name != null && mounted) {
+      await ref.read(repositoryProvider).renameChat(chat.id, name);
+    }
+    _naming = false;
+  }
+
   Future<void> _send(String spaceId) async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
-    await ref.read(repositoryProvider).sendMessage(spaceId: spaceId, body: text);
+    await ref.read(repositoryProvider).sendMessage(spaceId: spaceId, chatId: widget.chatId, body: text);
   }
 
   Future<void> _showAttachMenu(String spaceId) async {
@@ -214,6 +246,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _sendAttachment(String spaceId, TwinsItem item) async {
     await ref.read(repositoryProvider).sendMessage(
           spaceId: spaceId,
+          chatId: widget.chatId,
           body: item.title,
           attachedItemId: item.id,
         );
@@ -267,33 +300,36 @@ class _MessageBubble extends ConsumerWidget {
 }
 
 class _ChatHeader extends StatelessWidget {
-  final List<Profile> members;
-  final String? meId;
-  final String spaceName;
-  const _ChatHeader({required this.members, required this.meId, required this.spaceName});
+  final TwinsChat? chat;
+  final VoidCallback? onRename;
+  const _ChatHeader({required this.chat, required this.onRename});
 
   @override
   Widget build(BuildContext context) {
-    // Prefer the twin (the member who isn't me) for the avatar + subtitle.
-    final twin = members.where((m) => m.id != meId).cast<Profile?>().firstWhere((_) => true, orElse: () => null) ??
-        (members.isNotEmpty ? members.first : null);
-    final subtitle = twin != null && twin.id != meId
-        ? 'with ${twin.displayName}'
-        : 'Waiting for your twin to join…';
-
+    final title = chat?.name ?? (chat == null ? '' : 'Naming…');
     return Padding(
-      padding: const EdgeInsets.fromLTRB(TwinsSpacing.md, TwinsSpacing.sm, TwinsSpacing.md, TwinsSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(TwinsSpacing.xs, TwinsSpacing.sm, TwinsSpacing.md, TwinsSpacing.sm),
       child: Row(
         children: [
-          if (twin != null) UserAvatar(profile: twin, size: 40),
-          const SizedBox(width: TwinsSpacing.sm),
+          IconButton(icon: const Icon(PhosphorIconsBold.caretLeft), onPressed: () => Navigator.of(context).maybePop()),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(spaceName, style: TwinsTypography.heading(context.twins.textPrimary, size: 17), overflow: TextOverflow.ellipsis),
-                Text(subtitle, style: TwinsTypography.body(TwinsColors.mikuGreen, size: 12), overflow: TextOverflow.ellipsis),
-              ],
+            child: GestureDetector(
+              onTap: onRename,
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: TwinsTypography.heading(context.twins.textPrimary, size: 17),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (onRename != null) ...[
+                    const SizedBox(width: 6),
+                    Icon(PhosphorIconsBold.pencilSimple, size: 14, color: context.twins.textSecondary),
+                  ],
+                ],
+              ),
             ),
           ),
         ],

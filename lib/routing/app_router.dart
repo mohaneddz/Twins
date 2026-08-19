@@ -6,6 +6,7 @@ import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
 import '../features/auth/welcome_screen.dart';
+import '../features/chat/chat_screen.dart';
 import '../features/folders/all_folders_screen.dart';
 import '../features/home/activity_screen.dart';
 import '../features/home/home_shell.dart';
@@ -84,6 +85,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/item/:id',
         builder: (context, state) => ItemDetailScreen(itemId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/chat/:id',
+        builder: (context, state) => ChatScreen(chatId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/add',

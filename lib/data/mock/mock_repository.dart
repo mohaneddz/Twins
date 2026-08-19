@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models/chat.dart';
 import '../models/comment.dart';
 import '../models/folder.dart';
 import '../models/item.dart';
@@ -27,6 +28,7 @@ class MockTwinsRepository implements TwinsRepository {
     _items = List.of(MockSeed.items);
     _tags = List.of(MockSeed.tags);
     _comments = List.of(MockSeed.comments);
+    _chats = List.of(MockSeed.chats);
     _messages = List.of(MockSeed.messages);
     _reactions = List.of(MockSeed.reactions);
   }
@@ -38,6 +40,7 @@ class MockTwinsRepository implements TwinsRepository {
   late List<TwinsItem> _items;
   late List<TwinsTag> _tags;
   late List<TwinsComment> _comments;
+  late List<TwinsChat> _chats;
   late List<TwinsMessage> _messages;
   late List<TwinsReaction> _reactions;
 
@@ -45,6 +48,7 @@ class MockTwinsRepository implements TwinsRepository {
   final _foldersController = StreamController<void>.broadcast();
   final _itemsController = StreamController<void>.broadcast();
   final _commentsController = StreamController<void>.broadcast();
+  final _chatsController = StreamController<void>.broadcast();
   final _messagesController = StreamController<void>.broadcast();
   final _reactionsController = StreamController<void>.broadcast();
   final _tagsController = StreamController<void>.broadcast();
@@ -506,24 +510,77 @@ class MockTwinsRepository implements TwinsRepository {
     return comment;
   }
 
-  // ---- Messages ----
+  // ---- Chats ----
   @override
-  Stream<List<TwinsMessage>> watchMessages(String spaceId) async* {
-    List<TwinsMessage> forSpace() =>
-        _messages.where((m) => m.spaceId == spaceId).toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  Stream<List<TwinsChat>> watchChats(String spaceId) async* {
+    List<TwinsChat> forSpace() => _chats.where((c) => c.spaceId == spaceId).toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
     yield forSpace();
-    await for (final _ in _messagesController.stream) {
+    await for (final _ in _chatsController.stream) {
       yield forSpace();
     }
   }
 
   @override
-  Future<TwinsMessage> sendMessage({required String spaceId, required String body, String? attachedItemId}) async {
+  Future<TwinsChat> createChat({required String spaceId, String? name}) async {
+    await _delay();
+    final chat = TwinsChat(
+      id: _uuid.v4(),
+      spaceId: spaceId,
+      name: name,
+      createdBy: _authed?.id ?? MockSeed.meId,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+    _chats.add(chat);
+    _chatsController.add(null);
+    return chat;
+  }
+
+  @override
+  Future<TwinsChat> renameChat(String chatId, String name) async {
+    await _delay();
+    final index = _chats.indexWhere((c) => c.id == chatId);
+    final renamed = _chats[index].copyWith(name: name);
+    _chats[index] = renamed;
+    _chatsController.add(null);
+    return renamed;
+  }
+
+  @override
+  Future<void> deleteChat(String chatId) async {
+    await _delay();
+    _chats.removeWhere((c) => c.id == chatId);
+    _messages.removeWhere((m) => m.chatId == chatId);
+    _chatsController.add(null);
+    _messagesController.add(null);
+  }
+
+  // ---- Messages ----
+  @override
+  Stream<List<TwinsMessage>> watchMessages(String chatId) async* {
+    List<TwinsMessage> forChat() =>
+        _messages.where((m) => m.chatId == chatId).toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    yield forChat();
+    await for (final _ in _messagesController.stream) {
+      yield forChat();
+    }
+  }
+
+  @override
+  Future<TwinsMessage> sendMessage({
+    required String spaceId,
+    required String chatId,
+    required String body,
+    String? attachedItemId,
+  }) async {
     await _delay(ms: 120);
     final message = TwinsMessage(
       id: _uuid.v4(),
       spaceId: spaceId,
+      chatId: chatId,
       authorId: _authed?.id ?? MockSeed.meId,
       body: body,
       attachedItemId: attachedItemId,
@@ -531,7 +588,28 @@ class MockTwinsRepository implements TwinsRepository {
     );
     _messages.add(message);
     _messagesController.add(null);
+    // Bump updatedAt so the chat list resorts by recency; copyWith() with no
+    // args keeps the existing name and only refreshes the timestamp.
+    final chatIndex = _chats.indexWhere((c) => c.id == chatId);
+    if (chatIndex != -1) {
+      _chats[chatIndex] = _chats[chatIndex].copyWith();
+      _chatsController.add(null);
+    }
     return message;
+  }
+
+  @override
+  Stream<List<TwinsMessage>> watchRecentMessages(String spaceId, {int limit = 15}) async* {
+    List<TwinsMessage> recent() {
+      final sorted = _messages.where((m) => m.spaceId == spaceId).toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return sorted.take(limit).toList();
+    }
+
+    yield recent();
+    await for (final _ in _messagesController.stream) {
+      yield recent();
+    }
   }
 
   // ---- Reactions ----

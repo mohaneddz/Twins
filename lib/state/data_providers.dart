@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/models/chat.dart';
 import '../data/models/comment.dart';
 import '../data/models/folder.dart';
 import '../data/models/item.dart';
@@ -80,9 +81,20 @@ final commentsProvider = StreamProvider.family<List<TwinsComment>, String>((ref,
   return repo.watchComments(itemId);
 });
 
-final messagesProvider = StreamProvider.family<List<TwinsMessage>, String>((ref, spaceId) {
+final chatsProvider = StreamProvider.family<List<TwinsChat>, String>((ref, spaceId) {
   final repo = ref.watch(repositoryProvider);
-  return repo.watchMessages(spaceId);
+  return repo.watchChats(spaceId);
+});
+
+final messagesProvider = StreamProvider.family<List<TwinsMessage>, String>((ref, chatId) {
+  final repo = ref.watch(repositoryProvider);
+  return repo.watchMessages(chatId);
+});
+
+/// Recent messages across every chat in the space, for the activity feed.
+final recentMessagesProvider = StreamProvider.family<List<TwinsMessage>, String>((ref, spaceId) {
+  final repo = ref.watch(repositoryProvider);
+  return repo.watchRecentMessages(spaceId);
 });
 
 class ReactionQuery {

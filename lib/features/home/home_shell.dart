@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../sharing/share_intent_service.dart';
-import '../chat/chat_screen.dart';
+import '../chat/chat_list_screen.dart';
 import '../folders/all_folders_screen.dart';
 import '../profile/profile_screen.dart';
 import 'home_dashboard_screen.dart';
@@ -38,7 +38,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   final _pages = const [
     HomeDashboardScreen(),
     AllFoldersScreen(),
-    ChatScreen(),
+    ChatListScreen(),
     ProfileScreen(),
   ];
 

@@ -1,6 +1,7 @@
 class TwinsMessage {
   final String id;
   final String spaceId;
+  final String chatId;
   final String authorId;
   final String body;
   final String? replyToId;
@@ -10,6 +11,7 @@ class TwinsMessage {
   const TwinsMessage({
     required this.id,
     required this.spaceId,
+    required this.chatId,
     required this.authorId,
     required this.body,
     this.replyToId,
@@ -20,6 +22,7 @@ class TwinsMessage {
   factory TwinsMessage.fromJson(Map<String, dynamic> json) => TwinsMessage(
         id: json['id'] as String,
         spaceId: json['space_id'] as String,
+        chatId: json['chat_id'] as String,
         authorId: json['author_id'] as String,
         body: json['body'] as String,
         replyToId: json['reply_to_id'] as String?,
@@ -29,6 +32,7 @@ class TwinsMessage {
 
   Map<String, dynamic> toJson() => {
         'space_id': spaceId,
+        'chat_id': chatId,
         'body': body,
         'reply_to_id': replyToId,
         'attached_item_id': attachedItemId,

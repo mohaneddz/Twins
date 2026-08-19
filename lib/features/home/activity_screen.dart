@@ -29,7 +29,7 @@ class ActivityScreen extends ConsumerWidget {
         data: (space) {
           if (space == null) return const SizedBox.shrink();
           final itemsAsync = ref.watch(recentItemsProvider(space.id));
-          final messagesAsync = ref.watch(messagesProvider(space.id));
+          final messagesAsync = ref.watch(recentMessagesProvider(space.id));
           final membersAsync = ref.watch(spaceMembersProvider(space.id));
 
           return membersAsync.when(
