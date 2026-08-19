@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../data/models/folder.dart';
+import '../../data/models/item.dart';
 import '../../state/repository_provider.dart';
 import '../../state/theme_provider.dart';
 import '../../theme/colors.dart';
@@ -59,6 +62,11 @@ class SettingsScreen extends ConsumerWidget {
               label: 'Export our space',
               onTap: () => _exportSpace(context, ref),
             ),
+            _SettingsTile(
+              icon: PhosphorIconsRegular.download,
+              label: 'Import from a backup',
+              onTap: () => _importSpace(context, ref),
+            ),
           ]),
           const SizedBox(height: TwinsSpacing.lg),
           const _SectionLabel('About'),
@@ -96,6 +104,83 @@ class SettingsScreen extends ConsumerWidget {
       await Share.shareXFiles([XFile(file.path, mimeType: 'application/json')], subject: 'Our ¡Twins! space export');
     } catch (e) {
       if (context.mounted) showTwinsToast(context, "Couldn't export right now.", isError: true);
+    }
+  }
+
+  Future<void> _importSpace(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Import a backup?',
+      message: 'Folders and items from the file will be added to this space. Comments and chat history are not '
+          'part of a backup and stay behind.',
+      confirmLabel: 'Choose file',
+    );
+    if (!confirmed) return;
+
+    final picked = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    final path = picked?.files.single.path;
+    if (path == null) return;
+
+    final space = await ref.read(repositoryProvider).currentSpace();
+    if (space == null || !context.mounted) return;
+
+    try {
+      final raw = jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
+      final repo = ref.read(repositoryProvider);
+      final folderRows = (raw['folders'] as List? ?? []).cast<Map<String, dynamic>>();
+      final itemRows = (raw['items'] as List? ?? []).cast<Map<String, dynamic>>();
+
+      final folderIdMap = <String, String>{};
+      for (final row in folderRows) {
+        final folder = TwinsFolder.fromJson(row);
+        final created = await repo.createFolder(
+          spaceId: space.id,
+          name: folder.name,
+          colorValue: folder.color.toARGB32(),
+          icon: folder.icon,
+        );
+        folderIdMap[folder.id] = created.id;
+      }
+      // Second pass so a child folder's parent (already imported above,
+      // regardless of export order) can be remapped to its new id.
+      for (final row in folderRows) {
+        final folder = TwinsFolder.fromJson(row);
+        final newParentId = folder.parentId != null ? folderIdMap[folder.parentId] : null;
+        if (newParentId == null) continue;
+        final newId = folderIdMap[folder.id]!;
+        final created = await repo.getFolder(newId);
+        if (created != null) await repo.updateFolder(created.copyWith(parentId: newParentId));
+      }
+
+      var itemCount = 0;
+      for (final row in itemRows) {
+        final item = TwinsItem.fromJson(row);
+        await repo.createItem(TwinsItem(
+          id: item.id,
+          spaceId: space.id,
+          folderId: item.folderId != null ? folderIdMap[item.folderId] : null,
+          createdBy: item.createdBy,
+          type: item.type,
+          platform: item.platform,
+          sourceUrl: item.sourceUrl,
+          storagePath: item.storagePath,
+          thumbnailUrl: item.thumbnailUrl,
+          title: item.title,
+          description: item.description,
+          content: item.content,
+          metadata: item.metadata,
+          durationMs: item.durationMs,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+        ));
+        itemCount++;
+      }
+
+      if (context.mounted) {
+        showTwinsToast(context, 'Imported $itemCount item${itemCount == 1 ? '' : 's'} and ${folderRows.length} folder${folderRows.length == 1 ? '' : 's'}.');
+      }
+    } catch (e) {
+      if (context.mounted) showTwinsToast(context, "Couldn't read that backup file.", isError: true);
     }
   }
 
