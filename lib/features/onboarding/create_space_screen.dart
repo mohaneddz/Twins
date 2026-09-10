@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../state/auth_providers.dart';
 import '../../state/repository_provider.dart';
 import '../../theme/palette.dart';
 import '../../theme/colors.dart';
@@ -32,6 +33,9 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
       final repo = ref.read(repositoryProvider);
       final space = await repo.createSpace(_name.text.trim());
       final invite = await repo.createInvite(space.id);
+      // Otherwise the router's redirect still sees the pre-creation "no
+      // space" result and bounces /home straight back to onboarding.
+      ref.invalidate(currentSpaceProvider);
       if (mounted) setState(() => _inviteCode = invite.code);
     } catch (_) {
       if (mounted) setState(() => _error = "Couldn't create your space. Try again in a moment.");

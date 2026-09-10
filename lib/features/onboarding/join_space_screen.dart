@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../state/auth_providers.dart';
 import '../../state/repository_provider.dart';
 import '../../theme/palette.dart';
 import '../../theme/colors.dart';
@@ -34,6 +35,9 @@ class _JoinSpaceScreenState extends ConsumerState<JoinSpaceScreen> {
     });
     try {
       await ref.read(repositoryProvider).joinSpaceWithCode(code);
+      // Otherwise the router's redirect still sees the pre-join "no space"
+      // result and bounces /home straight back to onboarding.
+      ref.invalidate(currentSpaceProvider);
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) setState(() => _error = "That code didn't work. Double-check it and try again.");
