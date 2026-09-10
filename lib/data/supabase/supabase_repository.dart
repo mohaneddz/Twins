@@ -210,18 +210,15 @@ class SupabaseTwinsRepository implements TwinsRepository {
     required int colorValue,
     required String icon,
   }) async {
-    final row = await supa
-        .from('folders')
-        .insert({
-          'space_id': spaceId,
-          'parent_id': parentId,
-          'name': name,
-          'color': '0x${colorValue.toRadixString(16).padLeft(8, '0').toUpperCase()}',
-          'icon': icon,
-          'created_by': supa.auth.currentUser!.id,
-        })
-        .select()
-        .single();
+    // Runs as a security-definer RPC - see migration 0013's header comment
+    // (same RLS-on-INSERT bug as createSpace/createInvite in 0012).
+    final row = await supa.rpc('create_folder', params: {
+      'p_space_id': spaceId,
+      'p_parent_id': parentId,
+      'p_name': name,
+      'p_color': '0x${colorValue.toRadixString(16).padLeft(8, '0').toUpperCase()}',
+      'p_icon': icon,
+    }) as Map<String, dynamic>;
     return TwinsFolder.fromJson(row);
   }
 
@@ -268,8 +265,22 @@ class SupabaseTwinsRepository implements TwinsRepository {
 
   @override
   Future<TwinsItem> createItem(TwinsItem draft) async {
-    final payload = draft.toJson()..['created_by'] = supa.auth.currentUser!.id;
-    final row = await supa.from('items').insert(payload).select().single();
+    // Runs as a security-definer RPC - see migration 0013's header comment
+    // (same RLS-on-INSERT bug as createSpace/createInvite in 0012).
+    final row = await supa.rpc('create_item', params: {
+      'p_space_id': draft.spaceId,
+      'p_folder_id': draft.folderId,
+      'p_type': draft.type.name,
+      'p_platform': draft.platform.name,
+      'p_source_url': draft.sourceUrl,
+      'p_storage_path': draft.storagePath,
+      'p_thumbnail_url': draft.thumbnailUrl,
+      'p_title': draft.title,
+      'p_description': draft.description,
+      'p_content': draft.content,
+      'p_metadata': draft.metadata,
+      'p_duration_ms': draft.durationMs,
+    }) as Map<String, dynamic>;
     return TwinsItem.fromJson(row);
   }
 
@@ -341,15 +352,13 @@ class SupabaseTwinsRepository implements TwinsRepository {
 
   @override
   Future<TwinsTag> createTag(String spaceId, String name, int colorValue) async {
-    final row = await supa
-        .from('tags')
-        .insert({
-          'space_id': spaceId,
-          'name': name,
-          'color': '0x${colorValue.toRadixString(16).padLeft(8, '0').toUpperCase()}',
-        })
-        .select()
-        .single();
+    // Runs as a security-definer RPC - see migration 0013's header comment
+    // (same RLS-on-INSERT bug as createSpace/createInvite in 0012).
+    final row = await supa.rpc('create_tag', params: {
+      'p_space_id': spaceId,
+      'p_name': name,
+      'p_color': '0x${colorValue.toRadixString(16).padLeft(8, '0').toUpperCase()}',
+    }) as Map<String, dynamic>;
     return TwinsTag.fromJson(row);
   }
 
@@ -375,17 +384,16 @@ class SupabaseTwinsRepository implements TwinsRepository {
 
     final toCreate = clean.where((n) => !byName.containsKey(n)).toList();
     if (toCreate.isNotEmpty) {
-      final rows = await supa
-          .from('tags')
-          .insert([
-            for (var i = 0; i < toCreate.length; i++)
-              {
-                'space_id': spaceId,
-                'name': toCreate[i],
-                'color': '0x${_tagPalette[(byName.length + i) % _tagPalette.length].toRadixString(16).padLeft(8, '0').toUpperCase()}',
-              },
-          ])
-          .select() as List;
+      // Runs as a security-definer RPC - see migration 0013's header comment
+      // (same RLS-on-INSERT bug as createSpace/createInvite in 0012).
+      final rows = await supa.rpc('create_tags_bulk', params: {
+        'p_space_id': spaceId,
+        'p_names': toCreate,
+        'p_colors': [
+          for (var i = 0; i < toCreate.length; i++)
+            '0x${_tagPalette[(byName.length + i) % _tagPalette.length].toRadixString(16).padLeft(8, '0').toUpperCase()}',
+        ],
+      }) as List;
       for (final r in rows) {
         final t = TwinsTag.fromJson(r as Map<String, dynamic>);
         byName[t.name.toLowerCase()] = t;
@@ -414,12 +422,12 @@ class SupabaseTwinsRepository implements TwinsRepository {
     required List<String> tagNames,
   }) async {
     final tags = await ensureTags(spaceId, tagNames);
-    await supa.from('item_tags').delete().eq('item_id', itemId);
-    if (tags.isNotEmpty) {
-      await supa.from('item_tags').insert([
-        for (final t in tags) {'item_id': itemId, 'tag_id': t.id},
-      ]);
-    }
+    // Runs as a security-definer RPC - see migration 0013's header comment
+    // (same RLS-on-INSERT bug as createSpace/createInvite in 0012).
+    await supa.rpc('set_item_tags', params: {
+      'p_item_id': itemId,
+      'p_tag_ids': [for (final t in tags) t.id],
+    });
   }
 
   // ---- Comments ----
@@ -436,19 +444,14 @@ class SupabaseTwinsRepository implements TwinsRepository {
     String? parentId,
     int? mediaTimestampMs,
   }) async {
-    final item = await getItem(itemId);
-    final row = await supa
-        .from('item_comments')
-        .insert({
-          'space_id': item?.spaceId,
-          'item_id': itemId,
-          'author_id': supa.auth.currentUser!.id,
-          'parent_id': parentId,
-          'body': body,
-          'media_timestamp_ms': mediaTimestampMs,
-        })
-        .select()
-        .single();
+    // Runs as a security-definer RPC - see migration 0013's header comment
+    // (same RLS-on-INSERT bug as createSpace/createInvite in 0012).
+    final row = await supa.rpc('add_comment', params: {
+      'p_item_id': itemId,
+      'p_body': body,
+      'p_parent_id': parentId,
+      'p_media_timestamp_ms': mediaTimestampMs,
+    }) as Map<String, dynamic>;
     return TwinsComment.fromJson(row);
   }
 
@@ -461,15 +464,12 @@ class SupabaseTwinsRepository implements TwinsRepository {
 
   @override
   Future<TwinsChat> createChat({required String spaceId, String? name}) async {
-    final row = await supa
-        .from('chats')
-        .insert({
-          'space_id': spaceId,
-          'name': name,
-          'created_by': supa.auth.currentUser!.id,
-        })
-        .select()
-        .single();
+    // Runs as a security-definer RPC - see migration 0013's header comment
+    // (same RLS-on-INSERT bug as createSpace/createInvite in 0012).
+    final row = await supa.rpc('create_chat', params: {
+      'p_space_id': spaceId,
+      'p_name': name,
+    }) as Map<String, dynamic>;
     return TwinsChat.fromJson(row);
   }
 
@@ -496,19 +496,16 @@ class SupabaseTwinsRepository implements TwinsRepository {
     required String body,
     String? attachedItemId,
   }) async {
-    final row = await supa
-        .from('messages')
-        .insert({
-          'space_id': spaceId,
-          'chat_id': chatId,
-          'author_id': supa.auth.currentUser!.id,
-          'body': body,
-          'attached_item_id': attachedItemId,
-        })
-        .select()
-        .single();
-    // Bump the chat's updated_at so the chat list resorts by recency.
-    await supa.from('chats').update({'updated_at': DateTime.now().toIso8601String()}).eq('id', chatId);
+    // Runs as a security-definer RPC - see migration 0013's header comment
+    // (same RLS-on-INSERT bug as createSpace/createInvite in 0012). Also
+    // bumps the chat's updated_at server-side so the chat list resorts by
+    // recency.
+    final row = await supa.rpc('send_message', params: {
+      'p_space_id': spaceId,
+      'p_chat_id': chatId,
+      'p_body': body,
+      'p_attached_item_id': attachedItemId,
+    }) as Map<String, dynamic>;
     return TwinsMessage.fromJson(row);
   }
 
@@ -537,26 +534,15 @@ class SupabaseTwinsRepository implements TwinsRepository {
     required String targetId,
     required String emoji,
   }) async {
-    final userId = supa.auth.currentUser!.id;
-    final existing = await supa
-        .from('reactions')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('target_type', targetType.name)
-        .eq('target_id', targetId)
-        .eq('emoji', emoji)
-        .maybeSingle();
-    if (existing != null) {
-      await supa.from('reactions').delete().eq('id', existing['id']);
-    } else {
-      await supa.from('reactions').insert({
-        'space_id': spaceId,
-        'user_id': userId,
-        'target_type': targetType.name,
-        'target_id': targetId,
-        'emoji': emoji,
-      });
-    }
+    // Runs as a security-definer RPC - see migration 0013's header comment
+    // (same RLS-on-INSERT bug as createSpace/createInvite in 0012). The
+    // select-then-branch toggle logic now lives server-side, atomically.
+    await supa.rpc('toggle_reaction', params: {
+      'p_space_id': spaceId,
+      'p_target_type': targetType.name,
+      'p_target_id': targetId,
+      'p_emoji': emoji,
+    });
   }
 
   // ---- Settings ----
@@ -568,18 +554,16 @@ class SupabaseTwinsRepository implements TwinsRepository {
 
   @override
   Future<TwinsUserSettings> updateSettings(TwinsUserSettings settings) async {
-    final row = await supa
-        .from('user_settings')
-        .upsert({
-          'user_id': settings.userId,
-          'theme': settings.theme.name,
-          'default_folder_id': settings.defaultFolderId,
-          'default_sort': settings.defaultSort,
-          'media_quality': settings.mediaQuality,
-          'notifications_enabled': settings.notificationsEnabled,
-        })
-        .select()
-        .single();
+    // Runs as a security-definer RPC - see migration 0013's header comment
+    // (an upsert whose row doesn't exist yet hits the same RLS-on-INSERT
+    // bug as createSpace/createInvite in 0012).
+    final row = await supa.rpc('upsert_user_settings', params: {
+      'p_theme': settings.theme.name,
+      'p_default_folder_id': settings.defaultFolderId,
+      'p_default_sort': settings.defaultSort,
+      'p_media_quality': settings.mediaQuality,
+      'p_notifications_enabled': settings.notificationsEnabled,
+    }) as Map<String, dynamic>;
     return TwinsUserSettings.fromJson(row);
   }
 
