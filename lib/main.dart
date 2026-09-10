@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'data/supabase/supabase_client_provider.dart';
+import 'features/setup/supabase_setup_screen.dart';
 import 'routing/app_router.dart';
 import 'sharing/share_intent_service.dart';
 import 'state/auth_providers.dart';
@@ -13,9 +14,26 @@ Future<void> main() async {
   try {
     await dotenv.load(fileName: '.env');
   } catch (_) {
-    // .env is optional - the app falls back to mock mode without it.
+    // .env is optional - only used for the AI-polish Groq key today.
   }
-  await initSupabase();
+  if (await hasStoredSupabaseConfig) {
+    await initSupabaseFromStoredConfig();
+    runApp(const ProviderScope(child: TwinsApp()));
+  } else {
+    // No project baked in (a "normal" build) and none saved from a previous
+    // launch - ask for it once before touching anything Supabase-related.
+    runApp(ProviderScope(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        home: SupabaseSetupScreen(onDone: _launchMainApp),
+      ),
+    ));
+  }
+}
+
+void _launchMainApp() {
   runApp(const ProviderScope(child: TwinsApp()));
 }
 
