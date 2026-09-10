@@ -16,6 +16,7 @@ import '../features/onboarding/join_space_screen.dart';
 import '../features/onboarding/pairing_choice_screen.dart';
 import '../features/profile/edit_profile_screen.dart';
 import '../features/search/search_screen.dart';
+import '../features/settings/change_password_screen.dart';
 import '../features/settings/help_center_screen.dart';
 import '../features/settings/invite_partner_screen.dart';
 import '../features/settings/manage_folders_screen.dart';
@@ -107,6 +108,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/settings/manage-tags', builder: (context, state) => const ManageTagsScreen()),
       GoRoute(path: '/settings/invite', builder: (context, state) => const InvitePartnerScreen()),
       GoRoute(path: '/settings/privacy', builder: (context, state) => const PrivacyScreen()),
+      GoRoute(path: '/settings/change-password', builder: (context, state) => const ChangePasswordScreen()),
       GoRoute(path: '/settings/notifications', builder: (context, state) => const NotificationsSettingsScreen()),
       GoRoute(path: '/settings/help', builder: (context, state) => const HelpCenterScreen()),
     ],

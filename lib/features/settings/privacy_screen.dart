@@ -16,6 +16,10 @@ class PrivacyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // The intro card below is a fixed light mint regardless of theme, so its
+    // text needs a fixed dark foreground - not the theme's textPrimary,
+    // which turns white in dark mode and disappears against the card.
+    final introCardFg = onColor(TwinsColors.mikuMist);
     return Scaffold(
       appBar: AppBar(title: const Text('Privacy')),
       body: ListView(
@@ -27,16 +31,28 @@ class PrivacyScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Just for us, always private 💚', style: TwinsTypography.heading(context.twins.textPrimary, size: 17)),
+                Text('Just for us, always private 💚', style: TwinsTypography.heading(introCardFg, size: 17)),
                 const SizedBox(height: TwinsSpacing.sm),
                 Text(
                   'Every folder, item, comment, and message in ¡Twins! is only visible to the two people '
                   'in this space. There is no public profile, no discovery feed, and no way for anyone else '
                   'to see or search your content - this is enforced on the server (Row Level Security), not '
                   'just hidden in the app.',
-                  style: TwinsTypography.body(context.twins.textPrimary.withValues(alpha: 0.75)),
+                  style: TwinsTypography.body(introCardFg.withValues(alpha: 0.75)),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: TwinsSpacing.lg),
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: TwinsRadius.lgRadius,
+            ),
+            child: ListTile(
+              leading: Icon(Icons.lock_outline, color: context.twins.textPrimary),
+              title: const Text('Change password'),
+              onTap: () => context.push('/settings/change-password'),
             ),
           ),
           const SizedBox(height: TwinsSpacing.lg),
