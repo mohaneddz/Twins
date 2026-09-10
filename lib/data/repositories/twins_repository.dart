@@ -11,9 +11,9 @@ import '../models/tag.dart';
 import '../models/upload_result.dart';
 import '../models/user_settings.dart';
 
-/// Data access abstraction. [MockTwinsRepository] backs the app when no
-/// Supabase credentials are configured; [SupabaseTwinsRepository] backs it
-/// with the real backend. UI code should only ever depend on this interface.
+/// Data access abstraction. [SupabaseTwinsRepository] backs the running app;
+/// [MockTwinsRepository] is a fake used only by the test suite. UI code
+/// should only ever depend on this interface.
 abstract class TwinsRepository {
   // ---- Auth ----
   Stream<Profile?> authState();
