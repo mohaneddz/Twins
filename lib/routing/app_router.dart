@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/forgot_password_screen.dart';
-import '../features/auth/login_screen.dart';
-import '../features/auth/signup_screen.dart';
-import '../features/auth/welcome_screen.dart';
+import '../features/auth/user_picker_screen.dart';
 import '../features/chat/chat_screen.dart';
 import '../features/folders/all_folders_screen.dart';
 import '../features/home/activity_screen.dart';
@@ -30,15 +28,13 @@ import '../state/auth_providers.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authAsync = ref.watch(authStateProvider);
+  final spaceAsync = ref.watch(currentSpaceProvider);
 
   return GoRouter(
     initialLocation: '/',
     refreshListenable: _RiverpodRefreshStream(ref),
     redirect: (context, state) {
-      final loggingIn = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/signup' ||
-          state.matchedLocation == '/forgot-password' ||
-          state.matchedLocation == '/welcome';
+      final loggingIn = state.matchedLocation == '/forgot-password' || state.matchedLocation == '/welcome';
       final onboarding = state.matchedLocation.startsWith('/onboarding');
 
       return authAsync.when(
@@ -48,10 +44,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             // (including the initial splash at '/') goes to welcome.
             return loggingIn ? null : '/welcome';
           }
-          // Logged in: leave the splash/auth screens for home; the onboarding
-          // (pairing) flow is allowed to stay.
-          if (state.matchedLocation == '/' || loggingIn) {
-            return onboarding ? null : '/home';
+          // Logged in but not paired with anyone yet: confine to the
+          // pairing flow instead of leaving home stuck on a permanent
+          // loading spinner for a space that doesn't exist.
+          if (!spaceAsync.isLoading && spaceAsync.valueOrNull == null) {
+            return onboarding ? null : '/onboarding';
+          }
+          // Logged in and paired: leave the splash/auth/onboarding screens
+          // for home.
+          if (state.matchedLocation == '/' || loggingIn || onboarding) {
+            return '/home';
           }
           return null;
         },
@@ -61,9 +63,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashGate()),
-      GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+      GoRoute(path: '/welcome', builder: (context, state) => const UserPickerScreen()),
       GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
       GoRoute(
         path: '/onboarding',
@@ -118,5 +118,6 @@ final routerProvider = Provider<GoRouter>((ref) {
 class _RiverpodRefreshStream extends ChangeNotifier {
   _RiverpodRefreshStream(Ref ref) {
     ref.listen(authStateProvider, (_, __) => notifyListeners());
+    ref.listen(currentSpaceProvider, (_, __) => notifyListeners());
   }
 }
