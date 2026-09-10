@@ -94,6 +94,11 @@ class MockTwinsRepository implements TwinsRepository {
   }
 
   @override
+  Future<void> updatePassword(String newPassword) async {
+    await _delay();
+  }
+
+  @override
   Future<Profile> updateProfile({String? displayName, String? username, String? bio, String? avatarUrl}) async {
     await _delay();
     final updated = (_authed ?? MockSeed.me).copyWith(displayName: displayName, username: username, bio: bio, avatarUrl: avatarUrl);

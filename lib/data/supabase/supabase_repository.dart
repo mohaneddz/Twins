@@ -107,6 +107,11 @@ class SupabaseTwinsRepository implements TwinsRepository {
   Future<void> resetPassword(String email) => supa.auth.resetPasswordForEmail(email);
 
   @override
+  Future<void> updatePassword(String newPassword) async {
+    await supa.auth.updateUser(UserAttributes(password: newPassword));
+  }
+
+  @override
   Future<Profile> updateProfile({String? displayName, String? username, String? bio, String? avatarUrl}) async {
     final userId = supa.auth.currentUser!.id;
     final payload = <String, dynamic>{
@@ -143,45 +148,21 @@ class SupabaseTwinsRepository implements TwinsRepository {
     return rows.map((r) => Profile.fromJson((r as Map)['profiles'] as Map<String, dynamic>)).toList();
   }
 
-  /// Starter tag catalog every new space begins with, so AI auto-tagging has
-  /// something to reuse from day one. The pair edits this under Manage tags.
-  static const defaultTagNames = [
-    'funny', 'aesthetic', 'food', 'recipes', 'travel', 'music',
-    'workout', 'cozy', 'outfits', 'memes', 'art', 'study',
-  ];
-
   @override
   Future<TwinsSpace> createSpace(String name) async {
-    final userId = supa.auth.currentUser!.id;
-    final row = await supa.from('spaces').insert({'name': name, 'created_by': userId}).select().single();
-    await supa.from('space_members').insert({'space_id': row['id'], 'user_id': userId, 'role': 'owner'});
-    // Seed the starter tag catalog (best-effort; pairing still works if it fails).
-    try {
-      await supa.from('tags').insert([
-        for (var i = 0; i < defaultTagNames.length; i++)
-          {
-            'space_id': row['id'],
-            'name': defaultTagNames[i],
-            'color': '0x${_tagPalette[i % _tagPalette.length].toRadixString(16).padLeft(8, '0').toUpperCase()}',
-          },
-      ]);
-    } catch (_) {}
+    // Runs as a security-definer RPC (see migration 0012) - a plain
+    // client-side insert here gets rejected by RLS on this project even
+    // when the check is provably true, a bug isolated to INSERT specifically
+    // (the identical check on UPDATE works fine). The RPC enforces the same
+    // invariant server-side and also seeds the starter tag catalog.
+    final row = await supa.rpc('create_space', params: {'p_name': name}) as Map<String, dynamic>;
     return TwinsSpace.fromJson(row);
   }
 
   @override
   Future<SpaceInvite> createInvite(String spaceId) async {
-    final userId = supa.auth.currentUser!.id;
-    final row = await supa
-        .from('space_invites')
-        .insert({
-          'space_id': spaceId,
-          'created_by': userId,
-          'code': null, // generated server-side by default expression
-          'expires_at': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
-        })
-        .select()
-        .single();
+    // Same RLS-on-INSERT workaround as createSpace above.
+    final row = await supa.rpc('create_invite', params: {'p_space_id': spaceId}) as Map<String, dynamic>;
     return SpaceInvite.fromJson(row);
   }
 
