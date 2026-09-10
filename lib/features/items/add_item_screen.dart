@@ -384,7 +384,13 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
               child: Row(children: [
                 const Icon(PhosphorIconsFill.checkCircle, color: TwinsColors.mikuGreen),
                 const SizedBox(width: 8),
-                Expanded(child: Text(_pickedFileName ?? 'File selected', overflow: TextOverflow.ellipsis)),
+                Expanded(
+                  child: Text(
+                    _pickedFileName ?? 'File selected',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: onColor(TwinsColors.mikuMist)),
+                  ),
+                ),
               ]),
             ),
           const SizedBox(height: TwinsSpacing.md),
@@ -428,7 +434,13 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
               child: Row(children: [
                 const Icon(PhosphorIconsFill.fileText, color: TwinsColors.mikuGreen),
                 const SizedBox(width: 8),
-                Expanded(child: Text(_pickedFileName ?? 'Document selected', overflow: TextOverflow.ellipsis)),
+                Expanded(
+                  child: Text(
+                    _pickedFileName ?? 'Document selected',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: onColor(TwinsColors.mikuMist)),
+                  ),
+                ),
               ]),
             ),
           const SizedBox(height: TwinsSpacing.md),
