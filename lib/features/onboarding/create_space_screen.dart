@@ -21,17 +21,22 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
   final _name = TextEditingController(text: "We're Twins!");
   bool _loading = false;
   String? _inviteCode;
+  String? _error;
 
   Future<void> _create() async {
-    setState(() => _loading = true);
-    final repo = ref.read(repositoryProvider);
-    final space = await repo.createSpace(_name.text.trim());
-    final invite = await repo.createInvite(space.id);
-    if (mounted) {
-      setState(() {
-        _inviteCode = invite.code;
-        _loading = false;
-      });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final repo = ref.read(repositoryProvider);
+      final space = await repo.createSpace(_name.text.trim());
+      final invite = await repo.createInvite(space.id);
+      if (mounted) setState(() => _inviteCode = invite.code);
+    } catch (_) {
+      if (mounted) setState(() => _error = "Couldn't create your space. Try again in a moment.");
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -57,6 +62,10 @@ class _CreateSpaceScreenState extends ConsumerState<CreateSpaceScreen> {
         Text('Give your space a name', style: TwinsTypography.body(context.twins.textSecondary)),
         const SizedBox(height: TwinsSpacing.md),
         TwinsInput(hint: 'Space name', controller: _name),
+        if (_error != null) ...[
+          const SizedBox(height: TwinsSpacing.xs),
+          Text(_error!, style: const TextStyle(color: TwinsColors.danger, fontSize: 13)),
+        ],
         const SizedBox(height: TwinsSpacing.lg),
         PrimaryButton(label: 'Create space', onPressed: _create, loading: _loading),
       ],
