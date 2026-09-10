@@ -61,6 +61,10 @@ class _ChoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The card itself stays a fixed light mint regardless of theme, so its
+    // text needs a fixed dark foreground too - not the theme's textPrimary,
+    // which turns white in dark mode and disappears against this card.
+    final fg = onColor(TwinsColors.mikuMist);
     return InkWell(
       borderRadius: TwinsRadius.lgRadius,
       onTap: onTap,
@@ -78,8 +82,8 @@ class _ChoiceCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TwinsTypography.heading(context.twins.textPrimary, size: 17)),
-                  Text(subtitle, style: TwinsTypography.body(context.twins.textSecondary, size: 13)),
+                  Text(title, style: TwinsTypography.heading(fg, size: 17)),
+                  Text(subtitle, style: TwinsTypography.body(fg.withValues(alpha: 0.7), size: 13)),
                 ],
               ),
             ),
