@@ -22,9 +22,6 @@ import '../../widgets/reaction_bar.dart';
 import '../../widgets/twins_bottom_sheet.dart';
 import 'chat_list_screen.dart';
 
-/// Messages so far before naming is worth attempting.
-const _autoNameThreshold = 3;
-
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
   const ChatScreen({super.key, required this.chatId});
@@ -155,12 +152,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
-  /// Fires once per unnamed chat, the first time it reaches
-  /// [_autoNameThreshold] messages. Renaming after that is manual only
-  /// (`chat.name` stops being null), so this never re-fires or fights a
-  /// name the twins picked themselves.
   Future<void> _maybeAutoName(TwinsChat chat, List<TwinsMessage> messages) async {
-    if (_naming || chat.name != null || messages.length < _autoNameThreshold) return;
+    if (!shouldAttemptAutoName(alreadyNaming: _naming, chatName: chat.name, messageCount: messages.length)) return;
     _naming = true;
     final name = await suggestChatName(messages.take(10).map((m) => m.body).toList());
     if (name != null && mounted) {
