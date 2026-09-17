@@ -2,32 +2,29 @@
 
 Audit date: 2026-09-17. Delta between what's claimed (README, state doc) and what's actually in the code.
 
-## ❌ Missing / not started
+## ✅ Done since the audit
 
-- **Push notifications** (M) — no Firebase/FCM/APNs code anywhere in `lib/`. Settings toggle exists as UI only; live updates rely entirely on Supabase Realtime. Needs a Firebase project + APNs certs + device-token storage + a Supabase Edge Function trigger before any client code is worth writing.
-- **iOS Share Extension** (S, but requires Xcode GUI, not headless) — `receive_sharing_intent` plugin is wired for Android (`ACTION_SEND` in `AndroidManifest.xml`), but iOS has no Share Extension target/App Group. iOS builds work otherwise; "Share → ¡Twins!" from other apps doesn't exist on iOS yet.
-- **GROQ_API_KEY server-side move** (S) — key currently ships in the client bundle for in-app AI polish even though `resolve-link` Edge Function already supports it server-side. Security cleanup, not a missing feature.
-- **Automated tests for core flows** (M) — `test/` only has golden/widget tests for cards/theme and one `search_test.dart`. No tests for pairing, RLS-backed repository flows, chat auto-naming, or share-intent replay.
+- **GROQ_API_KEY server-side move** — link polish, tag suggestion, and chat auto-naming all now go through Edge Functions (`resolve-link`, new `suggest-tags`, new `name-chat`). Nothing calls Groq directly from the Flutter client anymore; `flutter_dotenv` dependency dropped.
+- **Stale README claims fixed** — avatar upload and import-from-backup were already implemented; the README no longer says otherwise.
+- **Tests added** — `SpaceInvite.isValid` (expiry/used-once logic), `shouldAttemptAutoName` (chat auto-name trigger, extracted out of `ChatScreen` into a pure function), and `ShareIntentService` pending-share stash/replay.
 
-## ⚠️ Shell / needs backend action
+## ❌ Blocked on something outside the code — needs your action first
 
-- **Migration `0011_chats.sql`** (chat threads) — written but per the state doc not yet applied to a live Supabase project (no Twins project currently linked in this environment). Needs `supabase link` + `supabase db push` before testing threads against a real backend.
+- **Push notifications** (M) — no Firebase/FCM/APNs code anywhere in `lib/`. Needs a Firebase project + APNs certs + device-token storage before any client code is worth writing. Can't proceed without those credentials.
+- **iOS Share Extension** (S, but Xcode GUI only) — needs a manual Xcode step (File → New → Target → Share Extension + App Group) that can't be scripted headlessly. Android sharing already works.
+- **Migration `0011_chats.sql` not applied** — no Twins Supabase project is linked in this environment (`supabase projects list` shows none under this account). Needs `supabase link --project-ref <ref>` with your project's ref, then `supabase db push`, before chat threads can be tested against a real backend. Also blocks deploying the two new Edge Functions (`suggest-tags`, `name-chat`) and re-deploying `resolve-link`.
 
-## ✅ Confirmed built (README is stale here — don't trust it)
+## ⚠️ Still open, not blocked
 
-- Profile avatar upload — `edit_profile_screen.dart` calls `repo.uploadAvatar(...)`, wired to Supabase Storage's `avatars` bucket. README still says "not wired yet" — that line is outdated.
-- Import from backup — `settings_screen.dart` has the "Import from a backup" flow (folders/items re-created with remapped ids). README still says only Export exists — outdated.
+- **RLS-backed repository flow tests and the two-member pairing cap** — these live entirely server-side (Postgres trigger + `join_space_with_code` RPC), not in client code, so they need a linked Supabase project (or a local `supabase start` stack) to test against for real. Not written yet.
 
 ## 👻 Known, deliberate non-features (not gaps)
 
 - TikTok/Instagram Reels aren't re-hosted/downloaded — thumbnail + "Open original" only, per platform ToS. Documented as intentional in the README.
 
-## Recommended order
+## Next steps, in order
 
-1. Link a Supabase project and push migration `0011` — blocks testing chat threads at all against real data.
-2. iOS Share Extension — if iOS parity matters, this is the one manual step blocking it.
-3. Move `GROQ_API_KEY` server-side — quick security win, low effort.
-4. Push notifications — biggest effort, needs external account setup (Firebase/APNs) before any code.
-5. Test coverage for pairing/RLS/chat-naming/share-replay — polish, do opportunistically.
-
-*(README.md has two stale "not implemented" claims — see readme-upkeep skill to fix these once convenient.)*
+1. Link a Supabase project (`supabase link --project-ref <ref>`) and `supabase db push` — unblocks migration `0011` and deploying `resolve-link`/`suggest-tags`/`name-chat`.
+2. iOS Share Extension — one manual Xcode step, whenever iOS parity matters.
+3. Push notifications — needs a Firebase project + APNs certs first; biggest remaining effort.
+4. RLS/pairing integration tests — once a project is linked, worth adding.
