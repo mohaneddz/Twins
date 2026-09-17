@@ -80,32 +80,24 @@ steps needed. It creates:
   RLS policy checks the first path segment is a space you belong to, so that
   leading segment **must** be the space id (not a literal folder name).
 
-## 7. Link enrichment + AI (baked into the app)
+## 7. Link enrichment + AI (Edge Functions, optional)
 
-By default the app enriches pasted links **on-device** — no Edge Function
-needed. `lib/data/supabase/link_metadata_service.dart` detects the platform,
-pulls oEmbed/OpenGraph metadata, and (if `GROQ_API_KEY` is set in the bundled
-`.env`) calls Groq directly to polish the title, write a one-sentence summary,
-and suggest 2–4 tags. Get a key at [console.groq.com](https://console.groq.com).
-
-> **Security tradeoff:** a key in the bundled `.env` ships inside the app and
-> can be extracted. That's the accepted cost of running AI with no server. To
-> lock it down instead, use the optional Edge Function below and remove
-> `GROQ_API_KEY` from `.env`.
-
-### Optional: server-side enrichment (locks the Groq key away)
-
-The same logic exists as an Edge Function (`supabase/functions/resolve-link`)
-so the Groq key never ships in the client:
+All AI features — link metadata polish, tag suggestion, chat auto-naming —
+run entirely server-side via three Edge Functions. The client never sees
+`GROQ_API_KEY`; it just calls the function and gets back a result (or a
+best-effort empty/null on any failure):
 
 ```bash
-supabase functions deploy resolve-link
-supabase secrets set --env-file supabase/.env   # sets GROQ_API_KEY server-side
+supabase functions deploy resolve-link    # link metadata polish, Add Item flow
+supabase functions deploy suggest-tags    # AI tag suggestion, Add Item flow
+supabase functions deploy name-chat       # chat thread auto-naming
+supabase secrets set --env-file supabase/.env   # sets GROQ_API_KEY for all three
 ```
 
-If you go this route, point `resolveLinkMetadata` at the function instead of
-the on-device path. Either way the app always lets you save the raw link if
-enrichment fails.
+Get a key at [console.groq.com](https://console.groq.com) and put it only in
+`supabase/.env` (never the repo-root `.env`). Without a deployed function (or
+without `GROQ_API_KEY` set), each feature degrades gracefully: link saving,
+tagging, and chat all still work — just without the AI polish/suggestions.
 
 ## 8b. Seed a demo space (optional but recommended)
 

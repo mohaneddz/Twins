@@ -101,16 +101,18 @@ flutter run
 ## Supabase setup
 
 Full step-by-step instructions (create project, run migrations, configure
-storage, deploy the Edge Function, set the optional Groq secret) live in
+storage, deploy the Edge Functions, set the optional Groq secret) live in
 [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md).
 
 Short version:
 
 ```bash
 supabase link --project-ref <your-project-ref>
-supabase db push                          # applies everything in supabase/migrations
-supabase functions deploy resolve-link    # AI/link enrichment (optional)
-supabase secrets set --env-file supabase/.env   # sets GROQ_API_KEY (optional)
+supabase db push                                # applies everything in supabase/migrations
+supabase functions deploy resolve-link          # link enrichment (optional)
+supabase functions deploy suggest-tags          # AI tag suggestions (optional)
+supabase functions deploy name-chat             # AI chat auto-naming (optional)
+supabase secrets set --env-file supabase/.env   # sets GROQ_API_KEY (optional, shared by all three)
 
 # optional: load a realistic demo dataset (two paired users + content)
 cd supabase && npm install && npm run seed
@@ -128,7 +130,6 @@ Two files, split by trust level (see `.env.example` and
 | `EXPO_PUBLIC_SUPABASE_URL` | Flutter client | No (mock mode without it) |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Flutter client | No (mock mode without it) |
 | `EXPO_PUBLIC_APP_SCHEME` | Flutter client (deep link scheme) | No, defaults to `twins` |
-| `GROQ_API_KEY` | Flutter client (in-app AI link polish) | No (enables AI; **ships in the bundle** — see below) |
 
 **`supabase/.env`** (git-ignored, never bundled — server-side secrets):
 
@@ -136,13 +137,13 @@ Two files, split by trust level (see `.env.example` and
 |---|---|---|
 | `SUPABASE_SECRET_KEY` | `seed.ts`, off-device only | Only to run the seed |
 | `SUPABASE_DB_PASSWORD` / `*_CONNECTION_STRING` | `psql` / `supabase db push` | Only for direct DB access |
+| `GROQ_API_KEY` | `resolve-link`, `suggest-tags`, `name-chat` Edge Functions, server-side only | No (enables AI polish/tagging/naming) |
 
-**Never** put `SUPABASE_SECRET_KEY`, the service-role JWT, or the DB password in
-the client `.env` — the secret key bypasses Row Level Security and the app
-bundle is world-readable. `GROQ_API_KEY` is deliberately client-side so the AI
-runs with no server; accept that it can be extracted from the app, or move
-enrichment to the `resolve-link` Edge Function to keep the key server-only
-(see [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) §7).
+**Never** put `SUPABASE_SECRET_KEY`, the service-role JWT, the DB password, or
+`GROQ_API_KEY` in the client `.env` — the secret key bypasses Row Level
+Security and the app bundle is world-readable. All AI calls (link polish, tag
+suggestion, chat naming) go through Edge Functions, so `GROQ_API_KEY` never
+ships in the client.
 
 ## How pairing works
 
@@ -218,9 +219,8 @@ metadata — the app never depends on AI being available.
   the app relies on Supabase Realtime for in-app live updates instead. The
   architecture (`TwinsRepository` streams) is ready for push to be added
   later without restructuring.
-- Profile avatar upload isn't wired to Supabase Storage yet — the schema and
-  storage bucket/policies exist (`avatars` bucket in
-  `supabase/migrations/0006_storage.sql`), display name/username/bio editing
-  works today.
-- Import (the other half of Import/Export) is not implemented — Export to
-  JSON works from Settings → Our Space.
+- Profile avatar upload is wired to Supabase Storage's `avatars` bucket
+  (`supabase/migrations/0006_storage.sql`), alongside display name/username/bio
+  editing.
+- Import from a backup (Settings → Our Space) re-creates folders and items
+  from a JSON export into the current space, alongside Export.

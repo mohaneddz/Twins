@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'data/supabase/supabase_client_provider.dart';
 import 'features/setup/supabase_setup_screen.dart';
@@ -11,11 +10,6 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await dotenv.load(fileName: '.env');
-  } catch (_) {
-    // .env is optional - only used for the AI-polish Groq key today.
-  }
   if (await hasStoredSupabaseConfig) {
     await initSupabaseFromStoredConfig();
     runApp(const ProviderScope(child: TwinsApp()));
