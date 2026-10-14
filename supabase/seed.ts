@@ -169,7 +169,7 @@ async function main() {
     i11: randomUUID(),
   };
   await insert("items", [
-    { id: items.i1, space_id: spaceId, folder_id: folders.reels, created_by: me.id, type: "tiktok", platform: "tiktok", source_url: "https://www.tiktok.com/@user/video/1", thumbnail_url: "https://images.unsplash.com/photo-1517849845537-4d257902861a?w=600", title: "bro has no filter 😭", description: "this puppy #cozy #aesthetic", duration_ms: 18000, created_at: hoursAgo(2) },
+    { id: items.i1, space_id: spaceId, folder_id: folders.reels, created_by: me.id, type: "tiktok", platform: "tiktok", source_url: "https://www.tiktok.com/@user/video/1", thumbnail_url: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600", title: "bro has no filter 😭", description: "this puppy #cozy #aesthetic", duration_ms: 18000, created_at: hoursAgo(2) },
     { id: items.i2, space_id: spaceId, folder_id: folders.reels, created_by: twin.id, type: "tiktok", platform: "tiktok", source_url: "https://www.tiktok.com/@user/video/2", thumbnail_url: "https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=600", title: "the acrobat 🐈", created_at: hoursAgo(5) },
     { id: randomUUID(), space_id: spaceId, folder_id: folders.reels, created_by: me.id, type: "tiktok", platform: "tiktok", source_url: "https://www.tiktok.com/@user/video/3", thumbnail_url: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600", title: "gotta try this 🙃", created_at: daysAgo(1) },
     { id: randomUUID(), space_id: spaceId, folder_id: folders.reels, created_by: twin.id, type: "note", platform: "device", title: "Movie night ideas", content: "- Interstellar\n- Your Name\n- Into The Wild", created_at: daysAgo(4) },

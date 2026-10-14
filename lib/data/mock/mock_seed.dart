@@ -113,7 +113,7 @@ class MockSeed {
       type: ItemType.tiktok,
       platform: ItemPlatform.tiktok,
       sourceUrl: 'https://www.tiktok.com/@user/video/1',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1517849845537-4d257902861a?w=600',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600',
       title: 'bro has no filter 😭',
       description: 'this puppy #cozy #books #aesthetic',
       durationMs: 18000,
