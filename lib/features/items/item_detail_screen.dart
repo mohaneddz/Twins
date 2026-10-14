@@ -450,16 +450,19 @@ class _ItemTags extends ConsumerWidget {
         runSpacing: 8,
         children: [
           for (final t in tags)
-            ActionChip(
-              label: Text('#${t.name}'),
-              labelStyle: TwinsTypography.label(Colors.white, size: 12),
-              // `color` rather than backgroundColor: the M3 chip resolves its
-              // fill from `color` first, which painted it opaque white here.
-              color: WidgetStatePropertyAll(Colors.white.withValues(alpha: 0.10)),
-              side: BorderSide.none,
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              onPressed: () => context.push('/search?q=${Uri.encodeComponent(t.name)}'),
+            // A plain pill rather than ActionChip: the M3 chip took its fill
+            // from the light theme and drew these white-on-white.
+            Material(
+              color: Colors.white.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => context.push('/search?q=${Uri.encodeComponent(t.name)}'),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Text('#${t.name}', style: TwinsTypography.label(Colors.white, size: 12)),
+                ),
+              ),
             ),
         ],
       ),
