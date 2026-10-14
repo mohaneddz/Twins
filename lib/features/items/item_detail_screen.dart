@@ -453,7 +453,9 @@ class _ItemTags extends ConsumerWidget {
             ActionChip(
               label: Text('#${t.name}'),
               labelStyle: TwinsTypography.label(Colors.white, size: 12),
-              backgroundColor: Colors.white.withValues(alpha: 0.10),
+              // `color` rather than backgroundColor: the M3 chip resolves its
+              // fill from `color` first, which painted it opaque white here.
+              color: WidgetStatePropertyAll(Colors.white.withValues(alpha: 0.10)),
               side: BorderSide.none,
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -608,10 +610,11 @@ class _PreviewWithOpenButton extends StatelessWidget {
             decoration: const BoxDecoration(
               gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black87]),
             ),
+            // The title sits right below the preview, so the scrim only
+            // carries the way out to the original.
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Expanded(child: Text(item.title, style: TwinsTypography.body(Colors.white))),
-                const SizedBox(width: TwinsSpacing.sm),
                 if (item.sourceUrl != null)
                   FilledButton.tonal(
                     onPressed: () => launchUrl(Uri.parse(item.sourceUrl!), mode: LaunchMode.externalApplication),
