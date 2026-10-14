@@ -148,7 +148,13 @@ class _RecentItemsStrip extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(width: TwinsSpacing.sm),
             itemBuilder: (context, index) {
               final item = items[index];
-              return SizedBox(width: 150, child: ItemCard(item: item, onTap: () => context.push('/item/${item.id}')));
+              // Top-aligned so each card keeps its natural height; a horizontal
+              // list otherwise stretches it to the strip's full 216 and leaves a
+              // blank band under the title.
+              return Align(
+                alignment: Alignment.topCenter,
+                child: SizedBox(width: 150, child: ItemCard(item: item, onTap: () => context.push('/item/${item.id}'))),
+              );
             },
           ),
         );
