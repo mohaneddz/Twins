@@ -1,6 +1,7 @@
 -- ¡Twins! schema: profiles, spaces, membership (max 2), invites.
 -- Enable UUID generation.
 create extension if not exists "pgcrypto";
+create extension if not exists moddatetime with schema extensions;
 
 -- ---------------------------------------------------------------------------
 -- profiles: one row per auth user, 1:1 with auth.users
