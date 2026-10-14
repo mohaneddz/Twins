@@ -491,6 +491,9 @@ class _DarkComposer extends StatelessWidget {
               fillColor: Colors.white.withValues(alpha: 0.08),
               hintStyle: const TextStyle(color: Colors.white54),
             ),
+        // TextField takes its text colour from bodyLarge, not DefaultTextStyle,
+        // so without this typed comments came out navy on the dark screen.
+        textTheme: Theme.of(context).textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
       ),
       child: DefaultTextStyle(
         style: const TextStyle(color: Colors.white),
