@@ -37,78 +37,72 @@ class ItemCard extends StatelessWidget {
           boxShadow: [BoxShadow(color: palette.shadow, blurRadius: 12, offset: const Offset(0, 4))],
         ),
         clipBehavior: Clip.antiAlias,
-        // Shrink-wraps rather than using Expanded: the card is also rendered
-        // in horizontally-scrolling strips where its height is unbounded, and
-        // a non-zero flex under an unbounded constraint fails layout.
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AspectRatio(
-              // Wider than tall so the two-line title and the counts row still
-              // fit inside a 0.78 grid cell (the ratio every caller uses)
-              // without overflowing.
-              aspectRatio: 1.3,
-              child: isNote
-                  ? _NoteCover(item: item)
-                  : Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        MediaThumbnail(
-                          url: item.thumbnailUrl,
-                          fallbackIcon: PlatformBadge.visualFor(item.type).$1,
-                          fallbackColor: PlatformBadge.visualFor(item.type).$2,
+        // Grid cells and the home strip hand the card a fixed height: there the
+        // thumbnail takes whatever the text leaves, so the card has no blank
+        // band under a one-line title. With unbounded height it shrink-wraps
+        // around a fixed-ratio thumbnail instead, since Expanded would fail.
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final fillsCell = constraints.hasBoundedHeight;
+            final cover = isNote
+                ? _NoteCover(item: item)
+                : Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      MediaThumbnail(
+                        url: item.thumbnailUrl,
+                        fallbackIcon: PlatformBadge.visualFor(item.type).$1,
+                        fallbackColor: PlatformBadge.visualFor(item.type).$2,
+                      ),
+                      Positioned(top: 8, left: 8, child: PlatformBadge(type: item.type, size: 24)),
+                      if (item.sourceAuthor != null || item.sourceSiteName != null)
+                        Positioned(left: 0, right: 0, bottom: 0, child: _SourceStrip(item: item)),
+                      if (item.durationMs != null) Positioned(bottom: 8, right: 8, child: _DurationPill(ms: item.durationMs!)),
+                    ],
+                  );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: fillsCell ? MainAxisSize.max : MainAxisSize.min,
+              children: [
+                fillsCell ? Expanded(child: SizedBox(width: double.infinity, child: cover)) : AspectRatio(aspectRatio: 1.3, child: cover),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(11, 9, 11, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // The brand sheet wraps card titles onto a second line
+                      // rather than truncating them at the first word.
+                      Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TwinsTypography.heading(palette.textPrimary, size: 14),
+                      ),
+                      if (item.reactionCount > 0 || item.commentCount > 0) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            if (item.reactionCount > 0) ...[
+                              const Icon(PhosphorIconsFill.heart, size: 13, color: TwinsColors.sakuraPink),
+                              const SizedBox(width: 3),
+                              Text('${item.reactionCount}', style: TwinsTypography.label(palette.textSecondary, size: 11)),
+                              const SizedBox(width: 10),
+                            ],
+                            if (item.commentCount > 0) ...[
+                              Icon(PhosphorIconsFill.chatCircle, size: 13, color: palette.textSecondary),
+                              const SizedBox(width: 3),
+                              Text('${item.commentCount}', style: TwinsTypography.label(palette.textSecondary, size: 11)),
+                            ],
+                          ],
                         ),
-                        Positioned(top: 8, left: 8, child: PlatformBadge(type: item.type, size: 24)),
-                        if (item.sourceAuthor != null || item.sourceSiteName != null)
-                          Positioned(left: 0, right: 0, bottom: 0, child: _SourceStrip(item: item)),
-                        if (item.durationMs != null)
-                          Positioned(bottom: 8, right: 8, child: _DurationPill(ms: item.durationMs!)),
                       ],
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(11, 9, 11, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // The brand sheet wraps card titles onto a second line
-                  // rather than truncating them at the first word.
-                  Text(
-                    item.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TwinsTypography.heading(palette.textPrimary, size: 14),
+                    ],
                   ),
-                  if (item.reactionCount > 0 || item.commentCount > 0) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        if (item.reactionCount > 0) ...[
-                          const Icon(PhosphorIconsFill.heart, size: 13, color: TwinsColors.sakuraPink),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${item.reactionCount}',
-                            style: TwinsTypography.label(palette.textSecondary, size: 11),
-                          ),
-                          const SizedBox(width: 10),
-                        ],
-                        if (item.commentCount > 0) ...[
-                          Icon(PhosphorIconsFill.chatCircle, size: 13, color: palette.textSecondary),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${item.commentCount}',
-                            style: TwinsTypography.label(palette.textSecondary, size: 11),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -135,10 +129,7 @@ class _NoteCover extends StatelessWidget {
       padding: const EdgeInsets.all(TwinsSpacing.sm),
       child: Stack(
         children: [
-          Positioned.fill(
-            top: 34,
-            child: CustomPaint(painter: _RuledLinesPainter(TwinsColors.navy.withValues(alpha: 0.14))),
-          ),
+          Positioned.fill(top: 34, child: CustomPaint(painter: _RuledLinesPainter(TwinsColors.navy.withValues(alpha: 0.14)))),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -191,10 +182,7 @@ class _DurationPill extends StatelessWidget {
     final s = seconds % 60;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(6)),
       child: Text(
         '$m:${s.toString().padLeft(2, '0')}',
         style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
@@ -214,11 +202,7 @@ class _SourceStrip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(8, 18, item.durationMs != null ? 52 : 8, 7),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.transparent, Color(0xAA000000)],
-        ),
+        gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Color(0xAA000000)]),
       ),
       child: Text(
         item.sourceAuthor ?? item.sourceSiteName!,
