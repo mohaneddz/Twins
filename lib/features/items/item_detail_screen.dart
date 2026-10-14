@@ -175,7 +175,8 @@ class _ItemDetailBody extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(item.title, style: TwinsTypography.heading(Colors.white, size: 20)),
-                        if (item.description != null && item.description!.isNotEmpty) ...[
+                        _SourceLine(item: item),
+                        if (item.description != null && item.description!.isNotEmpty && item.description != item.title) ...[
                           const SizedBox(height: 4),
                           Text(item.description!, style: TwinsTypography.body(Colors.white70)),
                         ],
@@ -590,7 +591,8 @@ class _PreviewWithOpenButton extends StatelessWidget {
     return Stack(
       children: [
         AspectRatio(
-          aspectRatio: 4 / 5,
+          // YouTube frames are 16:9; reels and TikToks are portrait.
+          aspectRatio: item.type == ItemType.youtube ? 16 / 9 : 4 / 5,
           child: MediaThumbnail(
             url: item.thumbnailUrl,
             fallbackIcon: PlatformBadge.visualFor(item.type).$1,
@@ -630,7 +632,8 @@ class _LinkRenderer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final domain = item.sourceUrl != null ? Uri.tryParse(item.sourceUrl!)?.host ?? '' : '';
+    final domain = item.sourceSiteName ??
+        (item.sourceUrl != null ? Uri.tryParse(item.sourceUrl!)?.host.replaceFirst('www.', '') ?? '' : '');
     return Container(
       margin: const EdgeInsets.fromLTRB(TwinsSpacing.lg, TwinsSpacing.md, TwinsSpacing.lg, 0),
       decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(20)),
@@ -658,6 +661,45 @@ class _LinkRenderer extends StatelessWidget {
                     child: const Text('Open link'),
                   ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Netito · YouTube · 11:04" under the title, with the source's favicon.
+class _SourceLine extends StatelessWidget {
+  final TwinsItem item;
+  const _SourceLine({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = [
+      if (item.sourceAuthor != null) item.sourceAuthor!,
+      if (item.sourceSiteName != null) item.sourceSiteName!,
+      if (item.durationMs != null) formatTimestamp(item.durationMs!),
+    ];
+    if (parts.isEmpty) return const SizedBox.shrink();
+    final favicon = item.sourceFaviconUrl;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          if (favicon != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(width: 16, height: 16, child: MediaThumbnail(url: favicon, fallbackIcon: PhosphorIconsRegular.globe)),
+            ),
+            const SizedBox(width: 6),
+          ],
+          Expanded(
+            child: Text(
+              parts.join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TwinsTypography.label(TwinsColors.mikuGreen, size: 13),
             ),
           ),
         ],

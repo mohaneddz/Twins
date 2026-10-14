@@ -60,6 +60,8 @@ class ItemCard extends StatelessWidget {
                           fallbackColor: PlatformBadge.visualFor(item.type).$2,
                         ),
                         Positioned(top: 8, left: 8, child: PlatformBadge(type: item.type, size: 24)),
+                        if (item.sourceAuthor != null || item.sourceSiteName != null)
+                          Positioned(left: 0, right: 0, bottom: 0, child: _SourceStrip(item: item)),
                         if (item.durationMs != null)
                           Positioned(bottom: 8, right: 8, child: _DurationPill(ms: item.durationMs!)),
                       ],
@@ -195,6 +197,33 @@ class _DurationPill extends StatelessWidget {
       ),
       child: Text(
         '$m:${s.toString().padLeft(2, '0')}',
+        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+/// Who posted it, over a soft scrim along the thumbnail's bottom edge - the
+/// same place the platforms themselves put the creator's handle.
+class _SourceStrip extends StatelessWidget {
+  final TwinsItem item;
+  const _SourceStrip({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(8, 18, item.durationMs != null ? 52 : 8, 7),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.transparent, Color(0xAA000000)],
+        ),
+      ),
+      child: Text(
+        item.sourceAuthor ?? item.sourceSiteName!,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
       ),
     );
