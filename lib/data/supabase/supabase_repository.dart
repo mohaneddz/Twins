@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:http/http.dart' as http;
 import 'package:mime/mime.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -612,6 +613,27 @@ class SupabaseTwinsRepository implements TwinsRepository {
 
     final url = await supa.storage.from('spaces').createSignedUrl(path, _signedUrlTtlSeconds);
     return UploadResult(storagePath: path, url: url);
+  }
+
+  @override
+  Future<String?> rehostImage({required String spaceId, required String url}) async {
+    try {
+      final res = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
+      final mimeType = res.headers['content-type']?.split(';').first.trim() ?? '';
+      if (res.statusCode != 200 || !mimeType.startsWith('image/') || res.bodyBytes.length > 8 * 1024 * 1024) {
+        return null;
+      }
+      final ext = extensionFromMime(mimeType) ?? 'jpg';
+      final path = '$spaceId/items/previews/${const Uuid().v4()}.$ext';
+      await supa.storage.from('spaces').uploadBinary(
+            path,
+            res.bodyBytes,
+            fileOptions: FileOptions(contentType: mimeType, upsert: false),
+          );
+      return await supa.storage.from('spaces').createSignedUrl(path, _signedUrlTtlSeconds);
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

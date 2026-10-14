@@ -19,7 +19,10 @@ import '../../theme/radius.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../utils/link_detector.dart';
+import '../../utils/formatters.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/media_thumbnail.dart';
+import '../../widgets/platform_badge.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/twins_input.dart';
 
@@ -43,6 +46,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   final _noteController = TextEditingController();
   ItemType _detectedType = ItemType.link;
   String? _thumbnailUrl;
+  LinkMetadata? _linkMetadata;
   String? _pickedFilePath;
   String? _pickedFileName;
   bool _saving = false;
@@ -169,9 +173,12 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
     if (!mounted) return;
     setState(() {
       _resolvingMetadata = false;
+      _linkMetadata = meta;
       if (meta != null) {
         if (meta.title != null && _titleController.text.isEmpty) _titleController.text = meta.title!;
-        if (meta.description != null) _descriptionController.text = meta.description!;
+        // Reels/TikToks have no title of their own, so their caption already
+        // became the title; repeating it as the caption adds nothing.
+        if (meta.description != null && meta.description != meta.title) _descriptionController.text = meta.description!;
         if (meta.thumbnailUrl != null) _thumbnailUrl = meta.thumbnailUrl;
       }
     });
@@ -312,6 +319,15 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
               const SizedBox(width: 8),
               Text('Fetching preview...', style: TwinsTypography.body(context.twins.textSecondary, size: 13)),
             ]),
+          ],
+          if (_thumbnailUrl != null) ...[
+            const SizedBox(height: TwinsSpacing.md),
+            _LinkPreview(
+              thumbnailUrl: _thumbnailUrl!,
+              type: _detectedType,
+              source: _linkMetadata?.author ?? _linkMetadata?.siteName,
+              durationMs: _linkMetadata?.durationMs,
+            ),
           ],
           const SizedBox(height: TwinsSpacing.md),
           TwinsInput(hint: 'Title', controller: _titleController),
@@ -507,6 +523,8 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       thumbnailUrl: _thumbnailUrl,
       title: _titleController.text.trim().isEmpty ? url : _titleController.text.trim(),
       description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+      metadata: _linkMetadata?.toItemMetadata() ?? const {},
+      durationMs: _linkMetadata?.durationMs,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     ));
@@ -590,6 +608,10 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       final repo = ref.read(repositoryProvider);
       final space = await repo.currentSpace();
       if (space == null) throw Exception('No space');
+      var thumbnailUrl = draft.thumbnailUrl;
+      if (draft.sourceUrl != null && thumbnailUrl != null && thumbnailUrl.startsWith('http')) {
+        thumbnailUrl = await repo.rehostImage(spaceId: space.id, url: thumbnailUrl) ?? thumbnailUrl;
+      }
       final created = await repo.createItem(TwinsItem(
             id: '',
             spaceId: space.id,
@@ -599,10 +621,12 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
             platform: draft.platform,
             sourceUrl: draft.sourceUrl,
             storagePath: draft.storagePath,
-            thumbnailUrl: draft.thumbnailUrl,
+            thumbnailUrl: thumbnailUrl,
             title: draft.title,
             description: draft.description,
             content: draft.content,
+            metadata: draft.metadata,
+            durationMs: draft.durationMs,
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           ));
@@ -701,6 +725,68 @@ class _FolderTagPicker extends ConsumerWidget {
       },
       loading: () => const SizedBox.shrink(),
       error: (e, _) => const SizedBox.shrink(),
+    );
+  }
+}
+
+/// What the saved card will look like, so a missing or wrong thumbnail is
+/// obvious before saving rather than after.
+class _LinkPreview extends StatelessWidget {
+  final String thumbnailUrl;
+  final ItemType type;
+  final String? source;
+  final int? durationMs;
+
+  const _LinkPreview({required this.thumbnailUrl, required this.type, this.source, this.durationMs});
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, color) = PlatformBadge.visualFor(type);
+    return ClipRRect(
+      borderRadius: TwinsRadius.lgRadius,
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            MediaThumbnail(url: thumbnailUrl, fallbackIcon: icon, fallbackColor: color),
+            Positioned(top: 10, left: 10, child: PlatformBadge(type: type, size: 28)),
+            if (source != null || durationMs != null)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 24, 12, 10),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Color(0xAA000000)],
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          source ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      if (durationMs != null)
+                        Text(
+                          formatTimestamp(durationMs!),
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

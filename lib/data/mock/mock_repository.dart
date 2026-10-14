@@ -741,6 +741,9 @@ class MockTwinsRepository implements TwinsRepository {
   }
 
   @override
+  Future<String?> rehostImage({required String spaceId, required String url}) async => url;
+
+  @override
   Future<String> uploadAvatar({required String userId, required String localPath}) async {
     await _delay(ms: 300);
     return localPath;

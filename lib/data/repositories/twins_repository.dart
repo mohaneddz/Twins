@@ -153,6 +153,12 @@ abstract class TwinsRepository {
     void Function(double progress)? onProgress,
   });
 
+  /// Copies a remote preview image into the space's own storage and returns
+  /// a display URL for the copy, or null if it couldn't be fetched. Instagram
+  /// and TikTok preview URLs are signed and expire within days, so a saved
+  /// link would otherwise lose its thumbnail.
+  Future<String?> rehostImage({required String spaceId, required String url});
+
   /// Uploads image bytes (e.g. an already-cropped avatar) to the user's
   /// avatar storage area and returns a display URL.
   Future<String> uploadAvatar({required String userId, required String localPath});

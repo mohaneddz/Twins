@@ -7,6 +7,10 @@ class LinkMetadata {
   final String? description;
   final String? thumbnailUrl;
   final String? platform;
+  final String? author;
+  final String? siteName;
+  final String? faviconUrl;
+  final int? durationMs;
 
   /// AI-suggested topic tags from the Groq polish step (may be empty).
   final List<String> tags;
@@ -16,8 +20,19 @@ class LinkMetadata {
     this.description,
     this.thumbnailUrl,
     this.platform,
+    this.author,
+    this.siteName,
+    this.faviconUrl,
+    this.durationMs,
     this.tags = const [],
   });
+
+  /// What gets persisted on the item's `metadata` column.
+  Map<String, dynamic> toItemMetadata() => {
+        if (author != null) 'author': author,
+        if (siteName != null) 'site_name': siteName,
+        if (faviconUrl != null) 'favicon_url': faviconUrl,
+      };
 }
 
 /// Best-effort URL enrichment for the Add Item flow, delegated entirely to
@@ -40,6 +55,10 @@ Future<LinkMetadata?> resolveLinkMetadata(String url) async {
       description: data['description'] as String?,
       thumbnailUrl: data['thumbnail_url'] as String?,
       platform: data['platform'] as String?,
+      author: data['author'] as String?,
+      siteName: data['site_name'] as String?,
+      faviconUrl: data['favicon_url'] as String?,
+      durationMs: (data['duration_ms'] as num?)?.toInt(),
       tags: (data['tags'] as List?)?.whereType<String>().toList() ?? const [],
     );
   } on FunctionException {

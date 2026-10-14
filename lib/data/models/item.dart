@@ -45,6 +45,12 @@ class TwinsItem {
     this.tagIds = const [],
   });
 
+  /// Who made the linked post/video ("@handle" or channel name), as resolved
+  /// by the resolve-link Edge Function at save time.
+  String? get sourceAuthor => metadata['author'] as String?;
+  String? get sourceSiteName => metadata['site_name'] as String?;
+  String? get sourceFaviconUrl => metadata['favicon_url'] as String?;
+
   TwinsItem copyWith({
     String? folderId,
     String? title,
