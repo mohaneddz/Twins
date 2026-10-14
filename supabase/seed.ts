@@ -157,7 +157,7 @@ async function main() {
     { id: tags.cats, space_id: spaceId, name: "cats", color: palette[1] },
     { id: tags.cozy, space_id: spaceId, name: "cozy", color: palette[2] },
     { id: tags.travel, space_id: spaceId, name: "travel", color: palette[3] },
-    ...extraTags.map((name, i) => ({ space_id: spaceId, name, color: palette[(i + 4) % palette.length] })),
+    ...extraTags.map((name, i) => ({ id: randomUUID(), space_id: spaceId, name, color: palette[(i + 4) % palette.length] })),
   ]);
 
   // Items
@@ -198,11 +198,13 @@ async function main() {
 
   // Chat messages (capture ids so reactions can target them)
   const messageIds = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
+  const chatId = randomUUID();
+  await insert("chats", { id: chatId, space_id: spaceId, name: "Cat appreciation 🐈", created_by: me.id, created_at: hoursAgo(0.7) });
   await insert("messages", [
-    { id: messageIds[0], space_id: spaceId, author_id: me.id, body: "I need this cat in my life 🐈", created_at: hoursAgo(0.7) },
-    { id: messageIds[1], space_id: spaceId, author_id: twin.id, body: "same... look at that little face 🥺💜", created_at: hoursAgo(0.65) },
-    { id: messageIds[2], space_id: spaceId, author_id: me.id, body: "hahaha twins brain ✨", created_at: hoursAgo(0.63) },
-    { id: messageIds[3], space_id: spaceId, author_id: twin.id, body: "already added to Funny Reels 🙂", attached_item_id: items.i2, created_at: hoursAgo(0.6) },
+    { id: messageIds[0], space_id: spaceId, chat_id: chatId, author_id: me.id, body: "I need this cat in my life 🐈", created_at: hoursAgo(0.7) },
+    { id: messageIds[1], space_id: spaceId, chat_id: chatId, author_id: twin.id, body: "same... look at that little face 🥺💜", created_at: hoursAgo(0.65) },
+    { id: messageIds[2], space_id: spaceId, chat_id: chatId, author_id: me.id, body: "hahaha twins brain ✨", created_at: hoursAgo(0.63) },
+    { id: messageIds[3], space_id: spaceId, chat_id: chatId, author_id: twin.id, body: "already added to Funny Reels 🙂", attached_item_id: items.i2, created_at: hoursAgo(0.6) },
   ]);
 
   // Reactions (reaction_count on items is maintained by a trigger)
