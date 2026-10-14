@@ -428,7 +428,7 @@ async function polishWithGroq(meta: Metadata): Promise<Metadata> {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: "openai/gpt-oss-20b",
         messages: [
           {
             role: "system",
@@ -461,10 +461,14 @@ async function polishWithGroq(meta: Metadata): Promise<Metadata> {
           .filter((t: string) => t.length > 0 && t.length <= 24)
           .slice(0, 4)
       : [];
+    // The creator's own words win: only shorten titles too long for a card,
+    // and only summarise when the source had no description at all.
+    const aiTitle = typeof parsed.title === "string" ? parsed.title.trim() : "";
+    const aiSummary = typeof parsed.summary === "string" ? parsed.summary.trim() : "";
     return {
       ...meta,
-      title: typeof parsed.title === "string" && parsed.title.trim() ? parsed.title.trim() : meta.title,
-      description: typeof parsed.summary === "string" && parsed.summary.trim() ? parsed.summary.trim() : meta.description,
+      title: aiTitle && meta.title.length > 70 ? aiTitle : meta.title,
+      description: meta.description ?? (aiSummary || null),
       tags,
     };
   } catch {
