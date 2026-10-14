@@ -32,13 +32,11 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _controller = TextEditingController();
-  final _scrollController = ScrollController();
   bool _naming = false;
 
   @override
   void dispose() {
     _controller.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -77,18 +75,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         if (messages.isEmpty) {
                           return const EmptyState(emoji: '💬', title: 'Say hi to start the conversation');
                         }
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (_scrollController.hasClients) {
-                            _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-                          }
-                        });
                         return membersAsync.when(
+                          // Reversed so the list starts at the newest message
+                          // and stays there as attachment thumbnails load in;
+                          // jumping to maxScrollExtent after the first frame
+                          // landed short once images grew the content.
                           data: (members) => ListView.builder(
-                            controller: _scrollController,
+                            reverse: true,
                             padding: const EdgeInsets.all(TwinsSpacing.md),
                             itemCount: messages.length,
                             itemBuilder: (context, index) {
-                              final message = messages[index];
+                              final message = messages[messages.length - 1 - index];
                               final isMine = message.authorId == me?.id;
                               final author = members.firstWhere(
                                 (m) => m.id == message.authorId,
@@ -155,7 +152,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _maybeAutoName(TwinsChat chat, List<TwinsMessage> messages) async {
     if (!shouldAttemptAutoName(alreadyNaming: _naming, chatName: chat.name, messageCount: messages.length)) return;
     _naming = true;
-    final name = await suggestChatName(messages.take(10).map((m) => m.body).toList());
+    final name = await suggestChatName(messages.take(10).map((m) => m.body).where((b) => b.isNotEmpty).toList());
     if (name != null && mounted) {
       await ref.read(repositoryProvider).renameChat(chat.id, name);
     }
@@ -236,11 +233,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     );
   }
 
+  /// The card already shows the item's title, so the message text is only
+  /// whatever was typed in the composer.
   Future<void> _sendAttachment(String spaceId, TwinsItem item) async {
+    final text = _controller.text.trim();
+    _controller.clear();
     await ref.read(repositoryProvider).sendMessage(
           spaceId: spaceId,
           chatId: widget.chatId,
-          body: item.title,
+          body: text,
           attachedItemId: item.id,
         );
   }
