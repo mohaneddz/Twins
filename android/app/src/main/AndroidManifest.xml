@@ -34,6 +34,9 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="text/*"/>
             </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
 
             <!-- Optional deep link scheme (twins://...), configurable via
                  EXPO_PUBLIC_APP_SCHEME for parity with the env var contract. -->

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lets the space's dynamic shortcut (published from MainActivity) appear
+     in the top "Direct Share" row of the Android share sheet, instead of
+     only in the app list under it. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <share-target android:targetClass="com.mohaned.twins.MainActivity">
+        <data android:mimeType="text/plain" />
+        <category android:name="com.mohaned.twins.category.SHARE_TARGET" />
+    </share-target>
+</shortcuts>
