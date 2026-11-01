@@ -542,6 +542,9 @@ class MockTwinsRepository implements TwinsRepository {
   }
 
   @override
+  Future<void> autoNameChat(String chatId, String name, {required int messageCount}) => renameChat(chatId, name);
+
+  @override
   Future<TwinsChat> renameChat(String chatId, String name) async {
     await _delay();
     final index = _chats.indexWhere((c) => c.id == chatId);

@@ -124,7 +124,11 @@ abstract class TwinsRepository {
   /// A space's chat threads, most recently active first.
   Stream<List<TwinsChat>> watchChats(String spaceId);
   Future<TwinsChat> createChat({required String spaceId, String? name});
+  /// A name typed by someone; the auto-namer leaves it alone from then on.
   Future<TwinsChat> renameChat(String chatId, String name);
+
+  /// A name from the auto-namer, given at [messageCount] messages.
+  Future<void> autoNameChat(String chatId, String name, {required int messageCount});
   Future<void> deleteChat(String chatId);
 
   // ---- Messages ----

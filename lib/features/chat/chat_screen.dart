@@ -163,14 +163,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _maybeAutoName(TwinsChat chat, List<TwinsMessage> messages) async {
-    final threshold = ref.read(chatAutoNameAfterProvider);
-    if (!shouldAttemptAutoName(alreadyNaming: _naming, chatName: chat.name, messageCount: messages.length, threshold: threshold)) {
-      return;
-    }
+    final shouldName = shouldAttemptAutoName(
+      alreadyNaming: _naming,
+      chatName: chat.name,
+      nameIsAuto: chat.nameIsAuto,
+      namedAtCount: chat.namedAtCount,
+      messageCount: messages.length,
+      nameAfter: ref.read(chatAutoNameAfterProvider),
+      renameEvery: ref.read(chatRenameEveryProvider),
+    );
+    if (!shouldName) return;
     _naming = true;
-    final name = await suggestChatName(messages.take(10).map((m) => m.body).where((b) => b.isNotEmpty).toList());
+    // The latest stretch of the conversation, so a rename follows where the
+    // chat went rather than how it started.
+    final recent = messages.skip(messages.length > 30 ? messages.length - 30 : 0);
+    final name = await suggestChatName(recent.map((m) => m.body).where((b) => b.isNotEmpty).toList());
     if (name != null && mounted) {
-      await ref.read(repositoryProvider).renameChat(chat.id, name);
+      await ref.read(repositoryProvider).autoNameChat(chat.id, name, messageCount: messages.length);
     }
     _naming = false;
   }

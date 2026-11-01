@@ -76,9 +76,27 @@ class SettingsScreen extends ConsumerWidget {
                   DropdownMenuItem(value: 1, child: Text('1st message')),
                   DropdownMenuItem(value: 2, child: Text('2nd message')),
                   DropdownMenuItem(value: 3, child: Text('3rd message')),
+                  DropdownMenuItem(value: 5, child: Text('5th message')),
                 ],
                 onChanged: (n) {
                   if (n != null) ref.read(chatAutoNameAfterProvider.notifier).set(n);
+                },
+              ),
+            ),
+            _SettingsTile(
+              icon: PhosphorIconsRegular.arrowsClockwise,
+              label: 'Rename chats every',
+              trailing: DropdownButton<int>(
+                value: ref.watch(chatRenameEveryProvider),
+                underline: const SizedBox.shrink(),
+                items: const [
+                  DropdownMenuItem(value: 10, child: Text('10 messages')),
+                  DropdownMenuItem(value: 20, child: Text('20 messages')),
+                  DropdownMenuItem(value: 50, child: Text('50 messages')),
+                  DropdownMenuItem(value: 0, child: Text('Never')),
+                ],
+                onChanged: (n) {
+                  if (n != null) ref.read(chatRenameEveryProvider.notifier).set(n);
                 },
               ),
             ),

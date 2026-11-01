@@ -466,9 +466,17 @@ class SupabaseTwinsRepository implements TwinsRepository {
 
   @override
   Future<TwinsChat> renameChat(String chatId, String name) async {
-    final row = await supa.from('chats').update({'name': name}).eq('id', chatId).select().single();
+    final row = await supa.from('chats').update({'name': name, 'name_source': 'manual'}).eq('id', chatId).select().single();
     return TwinsChat.fromJson(row);
   }
+
+  @override
+  Future<void> autoNameChat(String chatId, String name, {required int messageCount}) => supa
+      .from('chats')
+      .update({'name': name, 'name_source': 'auto', 'named_at_count': messageCount})
+      .eq('id', chatId)
+      // never overwrite a name someone typed meanwhile
+      .or('name_source.is.null,name_source.eq.auto');
 
   @override
   Future<void> deleteChat(String chatId) => supa.from('chats').delete().eq('id', chatId);

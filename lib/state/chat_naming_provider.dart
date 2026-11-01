@@ -23,3 +23,26 @@ class ChatAutoNameAfterNotifier extends StateNotifier<int> {
 }
 
 final chatAutoNameAfterProvider = StateNotifierProvider<ChatAutoNameAfterNotifier, int>((ref) => ChatAutoNameAfterNotifier());
+
+const _renamePrefKey = 'twins_chat_rename_every';
+
+/// How many more messages an auto-named chat collects before it gets a
+/// fresh name; 0 keeps the first name for good.
+class ChatRenameEveryNotifier extends StateNotifier<int> {
+  ChatRenameEveryNotifier() : super(20) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getInt(_renamePrefKey) ?? 20;
+  }
+
+  Future<void> set(int messages) async {
+    state = messages;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_renamePrefKey, messages);
+  }
+}
+
+final chatRenameEveryProvider = StateNotifierProvider<ChatRenameEveryNotifier, int>((ref) => ChatRenameEveryNotifier());
