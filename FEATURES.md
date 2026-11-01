@@ -2,27 +2,25 @@
 
 Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (README, state doc) and what's actually in the code.
 
-## ✅ Done since the last audit
+## ✅ Done (2026-11-01)
 
-- **Test suite green again (32/32)** — the boot test and dashboard goldens were rendering an empty, unauthenticated shell because the app always builds `SupabaseTwinsRepository` now; they override `repositoryProvider` with `MockTwinsRepository`. Card goldens re-baselined for the fixed-height thumbnail layout.
-- **README / `.env.example` corrected** — they still promised a zero-setup mock mode, which went away in `140d51c`. They now describe the first-launch setup screen and the special build. `EXPO_PUBLIC_APP_SCHEME` dropped: nothing read it.
-- **Link previews (2026-10-14)** — per-platform extractors in `resolve-link`, author/site/duration kept, thumbnails re-hosted into Storage, "posted by" shown on cards and item detail. Edge functions moved off the retired `llama-3.1-8b-instant` model.
-- **Live database verified** — all 13 migrations (`0001`–`0013`) are applied on the live project (`supabase migration list --db-url`).
-- **Pairing / RLS tests** — `supabase/tests/pairing_rls_test.sql`, 12 checks (two-member cap, single-use/expired/unknown invites, cross-space reads and writes), all passing against the live project inside a rolled-back transaction.
-- **Android Direct Share** — the app publishes a long-lived sharing shortcut for the space so it can appear in the system share sheet's top row. Builds; **not yet tried on a device**.
+- **Self-serve setup from an empty Supabase project** — the setup screen probes the project, installs/updates the schema over a one-time connection string (`lib/data/supabase/project_setup.dart`), and deploys the three edge functions + `GROQ_API_KEY` with a one-time access token. Verified on a real phone against the live project: it applied `0014` and deployed all three functions.
+- **Slot-based sign-in** — "Who's this?" lists the project's two twins and creates a missing one with name + password (`0014_twin_slots.sql`). No emails, confirmation mail or invite codes; either twin resets the other's password in Settings → Privacy.
+- **Android Direct Share** — "We're Twins!" shows in the system share sheet's top row (verified on a Realme / Android 16; it climbed to first place after two shares).
+- **Cold-start shares fixed** — a share that launched the app used to land on home and lose the link (the router was rebuilt on every auth/space change). Now opens Add with the preview. Verified on the phone.
+- **Release builds had no INTERNET permission** — every release APK was offline. Fixed.
+- **Tests** — 28 Flutter tests; `supabase/tests/pairing_rls_test.sql` (12 checks) and `supabase/tests/twin_slots_test.sql` (8 checks), both rolled-back and safe on a live project.
 
-## ❌ Blocked on something outside the code — needs your action first
+## ❌ Blocked on something outside the code
 
-- **Edge functions are NOT deployed** (S) — `resolve-link`, `suggest-tags` and `name-chat` all return `NOT_FOUND` on the live project, so link previews, AI tags and chat auto-naming are broken in the real app. This machine's Supabase CLI is logged into a different account, so deploying needs `supabase login` with the account that owns the Twins project, then:
-  `supabase functions deploy resolve-link --project-ref incxcgnwtnalzxmztatq` (same for `suggest-tags`, `name-chat`) and `supabase secrets set --env-file supabase/.env --project-ref incxcgnwtnalzxmztatq`.
+- **Push notifications** (L) — no Firebase/FCM/APNs code. Needs a Firebase project + APNs certs first. Live in-app updates use Realtime.
+- **iOS Share Extension** (S, Xcode GUI only) — no extension target in `ios/`; also untested: the whole iOS build.
 
-- **Push notifications** (L) — no Firebase/FCM/APNs code anywhere. Needs a Firebase project + APNs certs + device-token storage + an Edge Function trigger. The settings toggle is a placeholder; live in-app updates use Realtime regardless.
-- **iOS Share Extension** (S, Xcode GUI only) — no extension target in `ios/`. Needs File → New → Target → Share Extension + an App Group. Android sharing works.
+## ⚠️ Still open
 
-## ⚠️ Still open, not blocked
-
-- **Direct Share on a real phone** (S) — install, pair, share a reel from Chrome/YouTube and check "¡Twins!" shows in the top row. Android ranks it by use, so it can take a couple of shares to climb.
-- **Lint** (S) — 19 `flutter analyze` infos, no errors: `unnecessary_underscores`, `use_null_aware_elements` in `supabase_repository.dart`, and three `use_build_context_synchronously` in `edit_profile_screen.dart`.
+- **Second twin's account** — slot 2 is still empty on the live project; create it from the other phone.
+- **`m.youtube.com` previews** — get YouTube's generic "Enjoy the videos and music you love" description instead of the video's (www links are fine).
+- **Lint** (S) — ~19 `flutter analyze` infos, no errors.
 
 ## 👻 Known, deliberate non-features (not gaps)
 
@@ -31,8 +29,8 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 
 ## Next steps, in order
 
-1. `supabase login` (right account) → deploy the three edge functions + secrets.
-2. Try Direct Share on a phone.
+1. Create twin 2 from the other phone.
+2. Fix the `m.youtube.com` description in `resolve-link`.
 3. Lint cleanup.
 4. iOS Share Extension, whenever iOS parity matters.
 5. Push notifications — Firebase project + APNs certs first.
