@@ -150,7 +150,7 @@ Future<void> showRenameChatSheet(BuildContext context, WidgetRef ref, TwinsChat 
   );
 }
 
-class _ChatTile extends StatelessWidget {
+class _ChatTile extends ConsumerWidget {
   final TwinsChat chat;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
@@ -158,8 +158,10 @@ class _ChatTile extends StatelessWidget {
   const _ChatTile({required this.chat, required this.onTap, required this.onLongPress});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.twins;
+    final messages = ref.watch(messagesProvider(chat.id)).valueOrNull;
+    final last = messages == null || messages.isEmpty ? null : messages.reduce((a, b) => a.createdAt.isAfter(b.createdAt) ? a : b);
     return ListTile(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -173,9 +175,14 @@ class _ChatTile extends StatelessWidget {
         style: TwinsTypography.heading(palette.textPrimary, size: 15),
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: chat.name == null
-          ? Text('Naming this chat…', style: TwinsTypography.body(palette.textSecondary, size: 13))
-          : null,
+      subtitle: messages == null
+          ? null
+          : Text(
+              last == null ? 'No messages yet' : (last.body.isNotEmpty ? last.body : 'Shared an item'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TwinsTypography.body(palette.textSecondary, size: 13),
+            ),
       trailing: Text(formatRelativeTime(chat.updatedAt), style: TwinsTypography.label(palette.textSecondary, size: 12)),
       shape: RoundedRectangleBorder(borderRadius: TwinsRadius.smRadius),
     );
