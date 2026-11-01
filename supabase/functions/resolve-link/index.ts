@@ -44,6 +44,10 @@ type Metadata = {
   // AI-suggested topic tags (Groq). Empty unless GROQ_API_KEY is set and the
   // polish step succeeds.
   tags: string[];
+  // How many images the AI actually looked at (0 = text only), and why the
+  // vision call failed when it did - so the app can tell vision is working.
+  ai_images?: number;
+  ai_vision_error?: string;
 };
 
 function emptyMetadata(platform: Platform): Metadata {
@@ -479,7 +483,11 @@ async function askGroq(apiKey: string, meta: Metadata, images: string[]): Promis
     }),
     signal: AbortSignal.timeout(images.length > 0 ? 15000 : 8000),
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    if (images.length === 0) return null;
+    const body = await res.text().catch(() => "");
+    throw new Error(`${res.status} ${body.slice(0, 160)}`);
+  }
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
   return content ? JSON.parse(content) : null;
@@ -493,10 +501,15 @@ async function polishWithGroq(meta: Metadata, url: URL, vision?: VisionOptions):
     const images = visionImages(meta, url, vision);
     let parsed: Record<string, unknown> | null = null;
     let sawImages = false;
+    let visionError: string | undefined;
     if (images.length > 0) {
       // A rate limit or an image the model can't fetch shouldn't cost the
       // text polish, so fall back to it.
-      parsed = await askGroq(apiKey, meta, images).catch(() => null);
+      try {
+        parsed = await askGroq(apiKey, meta, images);
+      } catch (e) {
+        visionError = e instanceof Error ? e.message : String(e);
+      }
       sawImages = parsed !== null;
     }
     parsed ??= await askGroq(apiKey, meta, []);
@@ -519,6 +532,8 @@ async function polishWithGroq(meta: Metadata, url: URL, vision?: VisionOptions):
       // than a channel's boilerplate; text-only, the creator's words win.
       description: sawImages ? aiSummary || meta.description : meta.description ?? (aiSummary || null),
       tags,
+      ai_images: sawImages ? images.length : 0,
+      ...(visionError ? { ai_vision_error: visionError } : {}),
     };
   } catch {
     return meta;
