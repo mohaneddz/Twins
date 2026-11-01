@@ -115,8 +115,8 @@ async function main() {
 
   // Profiles are auto-created by the on_auth_user_created trigger; enrich them.
   const { error: profileErr } = await admin.from("profiles").upsert([
-    { id: me.id, display_name: "Mohaned", username: "mohaned", bio: "twin no. 1 ✨" },
-    { id: twin.id, display_name: "Rania", username: "rania", bio: "twin no. 2 💜" },
+    { id: me.id, display_name: "Mohaned", username: "mohaned", bio: "twin no. 1 ✨", slot: 1 },
+    { id: twin.id, display_name: "Rania", username: "rania", bio: "twin no. 2 💜", slot: 2 },
   ]);
   if (profileErr) throw new Error(`Upsert profiles failed: ${profileErr.message}`);
 
