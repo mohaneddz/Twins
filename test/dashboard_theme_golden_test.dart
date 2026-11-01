@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:twins/data/mock/mock_repository.dart';
 import 'package:twins/features/home/home_dashboard_screen.dart';
 import 'package:twins/state/repository_provider.dart';
@@ -16,6 +17,7 @@ void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
+    SharedPreferences.setMockInitialValues({});
     // cached_network_image reaches for path_provider, which has no
     // implementation under `flutter test`; point it at the temp dir so the
     // thumbnail widgets can build. Images themselves still fail to load and
