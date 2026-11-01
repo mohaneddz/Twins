@@ -11,7 +11,15 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 - **Release builds had no INTERNET permission** — every release APK was offline. Fixed.
 - **Home greeting is opt-in** — "Hey twins!" is hidden unless turned on in Settings → Greeting on home.
 - **Shared links need no editing** — the URL is pulled out of share text, and YouTube links (m., music., youtu.be, share params) are saved as clean www watch links, which also fixed m.youtube previews showing YouTube's generic tagline. Verified on the phone.
-- **Tests** — 33 Flutter tests; `supabase/tests/pairing_rls_test.sql` (12 checks) and `supabase/tests/twin_slots_test.sql` (8 checks), both rolled-back and safe on a live project.
+- **Multi-folder items** (`0015`) — "Move to folder" is now "Add to folder": a checkbox sheet (dash when only some selected items are in a folder), shared by item details and multi-select; folders can also be picked on the add screen, with a New folder chip.
+- **Long-press multi-select** on home and in folders — Add to folder / Remove from this folder / Delete.
+- **Home "Everything" grid** under Recently added, with a Not in a folder filter.
+- **Unread badge on the bell** — counts what the other twin added or sent since Activity was last opened on this phone; message rows open their chat.
+- **Profile edits show instantly** (both twins' profiles stream over Realtime) and the profile page has pull-to-refresh.
+- **Chat**: keyboard no longer squeezes messages under the composer; chats auto-name after the 1st/2nd/3rd message (Settings → Chats, default 1st); the list shows each chat's latest message.
+- **AI vision** (Settings → AI looks at) — Groq's `qwen/qwen3.8-27b` sees up to 3 images (YouTube start/middle/end frames and/or the thumbnail) and writes a description of what's actually in the video; falls back to the text model on failure. Settings → Update server functions redeploys the edge functions from the phone.
+- **Schema upgrades on app update** — setup stores the schema version it confirmed; an update needing a newer one reconnects automatically and only asks for the connection string if the DB is behind.
+- **Tests** — 34 Flutter tests; `supabase/tests/pairing_rls_test.sql` (12 checks) and `supabase/tests/twin_slots_test.sql` (8 checks), both rolled-back and safe on a live project.
 
 ## ❌ Blocked on something outside the code
 
@@ -21,7 +29,7 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 ## ⚠️ Still open
 
 - **Second twin's account** — slot 2 is still empty on the live project; create it from the other phone.
-- **Redeploy `resolve-link`** — the function source now also canonicalizes YouTube links (for older app builds), but the deployed copy predates that; the app already sends clean links, so nothing is broken.
+- **Redeploy the edge functions** — the vision-enabled `resolve-link` is committed but not deployed: Settings → Update server functions with a Supabase access token. Until then previews use the older text-only version.
 - **Lint** (S) — ~19 `flutter analyze` infos, no errors.
 
 ## 👻 Known, deliberate non-features (not gaps)
@@ -31,6 +39,7 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 
 ## Next steps, in order
 
-1. Create twin 2 from the other phone.
-2. Lint cleanup.
-3. Push notifications — needs a Firebase project first (Android-only, so no APNs).
+1. Settings → Update server functions (turns on AI vision).
+2. Create twin 2 from the other phone.
+3. Lint cleanup.
+4. Push notifications — needs a Firebase project first (Android-only, so no APNs).

@@ -187,6 +187,18 @@ transaction that always rolls back, so it is safe against the live project:
 psql "$SUPABASE_POOLER_CONNECTION_STRING" -v ON_ERROR_STOP=1 -f supabase/tests/pairing_rls_test.sql
 ```
 
+## Folders, selection and settings
+
+- An item can be in **several folders** (`items.folder_ids`, migration 0015).
+  Item details → Add to folder, the add screen's folder chips, and
+  long-press multi-select (home and folder views) all use the same checkbox
+  sheet.
+- **Settings** (per phone): theme, greeting on home, when new chats get
+  auto-named (1st/2nd/3rd message), which images the AI looks at
+  (thumbnail / YouTube start, middle, end frames), and **Update server
+  functions**, which redeploys the edge functions with a personal access
+  token after an app update changes them.
+
 ## How incoming share works
 
 `lib/sharing/share_intent_service.dart` wraps the `receive_sharing_intent`
@@ -209,7 +221,7 @@ best-effort and never blocks saving.
 ## How Groq enrichment works
 
 Entirely optional. If `GROQ_API_KEY` is set as an Edge Function secret,
-`resolve-link` asks Groq (`openai/gpt-oss-20b`) to turn the raw
+`resolve-link` asks Groq (`openai/gpt-oss-20b`, or `qwen/qwen3.8-27b` with up to three images when AI vision is on) to turn the raw
 oEmbed/OpenGraph title+description into a shorter, punchier title, a
 one-sentence summary, and 2-4 suggested tags. If the key is missing or the
 call fails for any reason, the function silently falls back to the raw
