@@ -70,17 +70,29 @@ flutter pub get
 flutter run
 ```
 
-A plain `flutter run`/`flutter build` has no project baked in: on first launch
-the app shows a setup screen asking for your Supabase project URL and
-publishable key, then caches them on the device.
+Each pair of twins runs ¡Twins! on **their own Supabase project** — the free
+tier is plenty. On first launch the app walks through it:
+
+1. **Connect** — paste the project URL and publishable key
+   (Project Settings → API Keys). These are the only values kept on the phone.
+2. **Set up the database** — only if the project is empty or older than this
+   app. Paste the Session pooler connection string (Connect → Session pooler,
+   with your DB password filled in); the app applies every bundled migration
+   itself and records them where the Supabase CLI looks. Used once, never saved.
+3. **Link previews & AI** (optional) — paste a Supabase personal access token
+   and optionally a Groq key; the app deploys `resolve-link`, `suggest-tags`
+   and `name-chat` through the Management API and sets `GROQ_API_KEY`. Skip it
+   and links simply save without a preview.
+
+The second twin's phone only needs step 1.
 
 ### Build modes
 
 - **Normal** (`scripts/build_normal.ps1`, or plain `flutter build`): nothing
-  baked in; first-launch setup screen as above.
+  baked in; the full setup flow above.
 - **Special** (`scripts/build_special.ps1`): reads your local, git-ignored
-  `.env` and bakes the URL and key in via `--dart-define`, so the APK just
-  works — for handing straight to your twin.
+  `.env` and bakes the URL and key in via `--dart-define`, so step 1 is
+  skipped — for handing straight to your twin.
 
 To populate a project with a demo pair ("Mohaned & Rania") and sample
 folders/items, run the seed script described under "Supabase setup".
@@ -102,11 +114,9 @@ flutter run
 
 ## Supabase setup
 
-Full step-by-step instructions (create project, run migrations, configure
-storage, deploy the Edge Functions, set the optional Groq secret) live in
-[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md).
-
-Short version:
+The app's setup screen does all of this on its own (see "Running"). To do it
+from a computer instead, see [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md);
+short version:
 
 ```bash
 supabase link --project-ref <your-project-ref>
@@ -148,19 +158,24 @@ ships in the client.
 
 ## How pairing works
 
-A "Twins space" has a hard cap of exactly two members, enforced **server-side**
-(a Postgres trigger on `space_members`, plus the `join_space_with_code` RPC
-re-checking the count) — never trust a client-side check for this. After
-signing up, a user either:
+One Supabase project holds exactly one pair. Instead of emails and invite
+codes, the project has two account **slots**
+(`supabase/migrations/0014_twin_slots.sql`):
 
-1. **Creates a space** — generates a 6-character invite code (e.g. `7HG2K9`)
-   that expires in 7 days.
-2. **Joins with a code** — calls the `join_space_with_code(invite_code)` RPC,
-   which validates the code, checks the 2-member cap, and inserts the
-   membership row atomically.
+- **"Who's this?"** lists both slots before anyone logs in (`twin_slots()`):
+  a taken slot shows that twin's name and avatar and asks for their password;
+  an empty one offers "Create account" with just a name and a password.
+- **Creating** calls `claim_twin_slot()`, which makes the auth user directly
+  (login email `twin1@twins.local` / `twin2@twins.local`, so no confirmation
+  mail or SMTP is ever involved). The first twin's claim creates the space;
+  the second joins it.
+- **Forgot password?** There's no recovery email: either twin sets a new
+  password for the other in Settings → Privacy → "Reset a twin's password"
+  (`reset_twin_password()`, members of the same space only).
 
-Once both people are in, every folder/item/comment/message/reaction is
-visible to both and only both, enforced by Row Level Security
+The two-member cap is still enforced server-side (a trigger on
+`space_members`), and every folder/item/comment/message/reaction is visible to
+both and only both through Row Level Security
 (`supabase/migrations/0004_row_level_security.sql`).
 
 These guarantees are checked by `supabase/tests/pairing_rls_test.sql`: three
