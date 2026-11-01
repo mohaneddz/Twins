@@ -163,6 +163,15 @@ Once both people are in, every folder/item/comment/message/reaction is
 visible to both and only both, enforced by Row Level Security
 (`supabase/migrations/0004_row_level_security.sql`).
 
+These guarantees are checked by `supabase/tests/pairing_rls_test.sql`: three
+throwaway users act out create → invite → join and probe the cap, single-use
+and expired invites, and cross-space reads/writes. It runs inside one
+transaction that always rolls back, so it is safe against the live project:
+
+```bash
+psql "$SUPABASE_POOLER_CONNECTION_STRING" -v ON_ERROR_STOP=1 -f supabase/tests/pairing_rls_test.sql
+```
+
 ## How incoming share works
 
 `lib/sharing/share_intent_service.dart` wraps the `receive_sharing_intent`
@@ -185,7 +194,7 @@ best-effort and never blocks saving.
 ## How Groq enrichment works
 
 Entirely optional. If `GROQ_API_KEY` is set as an Edge Function secret,
-`resolve-link` asks Groq (`llama-3.1-8b-instant`) to turn the raw
+`resolve-link` asks Groq (`openai/gpt-oss-20b`) to turn the raw
 oEmbed/OpenGraph title+description into a shorter, punchier title, a
 one-sentence summary, and 2-4 suggested tags. If the key is missing or the
 call fails for any reason, the function silently falls back to the raw
@@ -194,6 +203,11 @@ metadata — the app never depends on AI being available.
 ## Android notes
 
 - Fully supported, including incoming share (`ACTION_SEND`).
+- Direct Share: once you're in a space, the app publishes a long-lived
+  sharing shortcut named after it (`MainActivity.kt`, `res/xml/shortcuts.xml`),
+  so it can appear in the system share sheet's top row. Apps with their own
+  share panels (TikTok, Instagram) still list it under "More" — those rows
+  are curated by the apps themselves.
 - Package: `com.mohaned.twins`.
 
 ## iOS notes
