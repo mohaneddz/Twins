@@ -1,30 +1,37 @@
 # ¡Twins! — Remaining work
 
-Audit date: 2026-09-17. Delta between what's claimed (README, state doc) and what's actually in the code.
+Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (README, state doc) and what's actually in the code.
 
-## ✅ Done since the audit
+## ✅ Done since the last audit
 
-- **GROQ_API_KEY server-side move** — link polish, tag suggestion, and chat auto-naming all now go through Edge Functions (`resolve-link`, new `suggest-tags`, new `name-chat`). Nothing calls Groq directly from the Flutter client anymore; `flutter_dotenv` dependency dropped.
-- **Stale README claims fixed** — avatar upload and import-from-backup were already implemented; the README no longer says otherwise.
-- **Tests added** — `SpaceInvite.isValid` (expiry/used-once logic), `shouldAttemptAutoName` (chat auto-name trigger, extracted out of `ChatScreen` into a pure function), and `ShareIntentService` pending-share stash/replay.
+- **Test suite green again (32/32)** — the boot test and dashboard goldens were rendering an empty, unauthenticated shell because the app always builds `SupabaseTwinsRepository` now; they override `repositoryProvider` with `MockTwinsRepository`. Card goldens re-baselined for the fixed-height thumbnail layout.
+- **README / `.env.example` corrected** — they still promised a zero-setup mock mode, which went away in `140d51c`. They now describe the first-launch setup screen and the special build. `EXPO_PUBLIC_APP_SCHEME` dropped: nothing read it.
+- **Link previews (2026-10-14)** — per-platform extractors in `resolve-link`, author/site/duration kept, thumbnails re-hosted into Storage, "posted by" shown on cards and item detail. Edge functions moved off the retired `llama-3.1-8b-instant` model.
+- **A Supabase project now exists** — `.env` points at a live project and migrations `0012`/`0013` were written against it. The September blocker ("no project linked") no longer holds.
+
+## ❓ Unverified — needs one check
+
+- **Backend deployment state** — the project isn't visible to this machine's Supabase CLI/connector (no `supabase/.temp/project-ref`), so it's unconfirmed that `0011`–`0013` are applied and `resolve-link` / `suggest-tags` / `name-chat` are deployed with `GROQ_API_KEY` set. Run `supabase link --project-ref <ref>`, then `supabase migration list` and `supabase functions list`.
 
 ## ❌ Blocked on something outside the code — needs your action first
 
-- **Push notifications** (M) — no Firebase/FCM/APNs code anywhere in `lib/`. Needs a Firebase project + APNs certs + device-token storage before any client code is worth writing. Can't proceed without those credentials.
-- **iOS Share Extension** (S, but Xcode GUI only) — needs a manual Xcode step (File → New → Target → Share Extension + App Group) that can't be scripted headlessly. Android sharing already works.
-- **Migration `0011_chats.sql` not applied** — no Twins Supabase project is linked in this environment (`supabase projects list` shows none under this account). Needs `supabase link --project-ref <ref>` with your project's ref, then `supabase db push`, before chat threads can be tested against a real backend. Also blocks deploying the two new Edge Functions (`suggest-tags`, `name-chat`) and re-deploying `resolve-link`.
+- **Push notifications** (L) — no Firebase/FCM/APNs code anywhere. Needs a Firebase project + APNs certs + device-token storage + an Edge Function trigger. The settings toggle is a placeholder; live in-app updates use Realtime regardless.
+- **iOS Share Extension** (S, Xcode GUI only) — no extension target in `ios/`. Needs File → New → Target → Share Extension + an App Group. Android sharing works.
 
 ## ⚠️ Still open, not blocked
 
-- **RLS-backed repository flow tests and the two-member pairing cap** — these live entirely server-side (Postgres trigger + `join_space_with_code` RPC), not in client code, so they need a linked Supabase project (or a local `supabase start` stack) to test against for real. Not written yet.
+- **RLS / pairing integration tests** (M) — the two-member cap and `join_space_with_code` live server-side and have no tests. Needs the linked project or a local `supabase start` stack.
+- **Lint** (S) — 19 `flutter analyze` infos, no errors: `unnecessary_underscores`, `use_null_aware_elements` in `supabase_repository.dart`, and three `use_build_context_synchronously` in `edit_profile_screen.dart`.
 
 ## 👻 Known, deliberate non-features (not gaps)
 
-- TikTok/Instagram Reels aren't re-hosted/downloaded — thumbnail + "Open original" only, per platform ToS. Documented as intentional in the README.
+- TikTok/Instagram Reels aren't re-hosted/downloaded — thumbnail + "Open original" only, per platform ToS.
+- No offline/demo mode — `MockTwinsRepository` is test-only by design.
 
 ## Next steps, in order
 
-1. Link a Supabase project (`supabase link --project-ref <ref>`) and `supabase db push` — unblocks migration `0011` and deploying `resolve-link`/`suggest-tags`/`name-chat`.
-2. iOS Share Extension — one manual Xcode step, whenever iOS parity matters.
-3. Push notifications — needs a Firebase project + APNs certs first; biggest remaining effort.
-4. RLS/pairing integration tests — once a project is linked, worth adding.
+1. Link the project and confirm migrations + edge functions are deployed.
+2. RLS/pairing integration tests against it.
+3. Lint cleanup.
+4. iOS Share Extension, whenever iOS parity matters.
+5. Push notifications — Firebase project + APNs certs first.
