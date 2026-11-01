@@ -13,6 +13,7 @@ import 'toast.dart';
 
 /// Bottom bar shown while items are long-press selected: file them into
 /// folders, take them out of the folder being viewed, or delete them.
+/// [onDone] also runs for the close button, ending the selection.
 class ItemSelectionBar extends ConsumerWidget {
   final String spaceId;
   final List<TwinsItem> items;
@@ -41,7 +42,7 @@ class ItemSelectionBar extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: TwinsSpacing.sm, vertical: TwinsSpacing.xs),
           child: Row(
             children: [
-              const SizedBox(width: TwinsSpacing.xs),
+              IconButton(tooltip: 'Cancel', icon: const Icon(Icons.close), onPressed: onDone),
               Text('${items.length} selected', style: TwinsTypography.label(Theme.of(context).colorScheme.onSurface)),
               const Spacer(),
               IconButton(

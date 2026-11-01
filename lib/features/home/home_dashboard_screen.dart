@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import '../../data/models/item.dart';
 import '../../state/auth_providers.dart' show currentSpaceProvider;
 import '../../state/data_providers.dart';
 import '../../state/greeting_provider.dart';
@@ -12,78 +13,179 @@ import '../../theme/typography.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/folder_card.dart';
 import '../../widgets/item_card.dart';
+import '../../widgets/filter_chip_twins.dart';
+import '../../widgets/item_selection_bar.dart';
 import '../../widgets/skeletons.dart';
 import '../../widgets/twins_logo.dart';
 import '../folders/folder_dialogs.dart';
 
-class HomeDashboardScreen extends ConsumerWidget {
+class HomeDashboardScreen extends ConsumerStatefulWidget {
   const HomeDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
+}
+
+class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
+  /// Long-press selection, shared by the Recently added strip and the
+  /// Everything grid.
+  final _selected = <String>{};
+  bool _unfiledOnly = false;
+
+  void _onItemTap(TwinsItem item) {
+    if (_selected.isEmpty) {
+      context.push('/item/${item.id}');
+    } else {
+      _toggle(item.id);
+    }
+  }
+
+  void _toggle(String id) => setState(() => _selected.contains(id) ? _selected.remove(id) : _selected.add(id));
+
+  @override
+  Widget build(BuildContext context) {
     final spaceAsync = ref.watch(currentSpaceProvider);
     final palette = context.twins;
+    final space = spaceAsync.valueOrNull;
+    final allItems = space == null ? const <TwinsItem>[] : ref.watch(allItemsProvider(space.id)).valueOrNull ?? const <TwinsItem>[];
 
-    return Scaffold(
-      body: spaceAsync.when(
-        data: (space) {
-          if (space == null) {
-            return const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen));
-          }
-          return SafeArea(
-            child: RefreshIndicator(
-              color: TwinsColors.mikuGreen,
-              onRefresh: () async => ref.invalidate(currentSpaceProvider),
-              child: ListView(
-                padding: const EdgeInsets.all(TwinsSpacing.lg),
-                children: [
-                  Row(
-                    children: [
-                      TwinsLogo(size: 26, textColor: palette.textPrimary),
-                      const Spacer(),
-                      IconButton(
-                        icon: Icon(PhosphorIconsBold.magnifyingGlass, color: palette.textPrimary),
-                        onPressed: () => context.push('/search'),
-                      ),
-                      IconButton(
-                        icon: Icon(PhosphorIconsBold.bell, color: palette.textPrimary),
-                        onPressed: () => context.push('/activity'),
-                      ),
-                    ],
-                  ),
-                  if (ref.watch(showGreetingProvider)) ...[
-                    const SizedBox(height: TwinsSpacing.md),
-                    Text('Hey twins! 👋', style: TwinsTypography.heading(palette.textPrimary, size: 22)),
-                    Text('What are we saving today?', style: TwinsTypography.body(palette.textSecondary)),
-                  ],
-                  const SizedBox(height: TwinsSpacing.xl),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Folders', style: TwinsTypography.heading(palette.textPrimary, size: 17)),
-                      GestureDetector(
-                        onTap: () => context.push('/folders'),
-                        child: Text('See all', style: TwinsTypography.label(TwinsColors.mikuGreen)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: TwinsSpacing.sm),
-                  _FoldersGrid(spaceId: space.id),
-                  const SizedBox(height: TwinsSpacing.xl),
-                  Text('Recently added', style: TwinsTypography.heading(palette.textPrimary, size: 17)),
-                  const SizedBox(height: TwinsSpacing.sm),
-                  _RecentItemsStrip(spaceId: space.id),
-                  const SizedBox(height: TwinsSpacing.xxxl),
-                ],
+    return PopScope(
+      canPop: _selected.isEmpty,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) setState(_selected.clear);
+      },
+      child: Scaffold(
+        bottomNavigationBar: _selected.isEmpty || space == null
+            ? null
+            : ItemSelectionBar(
+                spaceId: space.id,
+                items: allItems.where((i) => _selected.contains(i.id)).toList(),
+                onDone: () {
+                  if (mounted) setState(_selected.clear);
+                },
               ),
-            ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
-        error: (e, _) => Center(
-          child: Text('Something went wrong.', style: TwinsTypography.body(palette.textSecondary)),
+        body: spaceAsync.when(
+          data: (space) {
+            if (space == null) {
+              return const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen));
+            }
+            return SafeArea(
+              child: RefreshIndicator(
+                color: TwinsColors.mikuGreen,
+                onRefresh: () async => ref.invalidate(currentSpaceProvider),
+                child: ListView(
+                  padding: const EdgeInsets.all(TwinsSpacing.lg),
+                  children: [
+                    Row(
+                      children: [
+                        TwinsLogo(size: 26, textColor: palette.textPrimary),
+                        const Spacer(),
+                        IconButton(
+                          icon: Icon(PhosphorIconsBold.magnifyingGlass, color: palette.textPrimary),
+                          onPressed: () => context.push('/search'),
+                        ),
+                        IconButton(
+                          icon: Icon(PhosphorIconsBold.bell, color: palette.textPrimary),
+                          onPressed: () => context.push('/activity'),
+                        ),
+                      ],
+                    ),
+                    if (ref.watch(showGreetingProvider)) ...[
+                      const SizedBox(height: TwinsSpacing.md),
+                      Text('Hey twins! 👋', style: TwinsTypography.heading(palette.textPrimary, size: 22)),
+                      Text('What are we saving today?', style: TwinsTypography.body(palette.textSecondary)),
+                    ],
+                    const SizedBox(height: TwinsSpacing.xl),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Folders', style: TwinsTypography.heading(palette.textPrimary, size: 17)),
+                        GestureDetector(
+                          onTap: () => context.push('/folders'),
+                          child: Text('See all', style: TwinsTypography.label(TwinsColors.mikuGreen)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: TwinsSpacing.sm),
+                    _FoldersGrid(spaceId: space.id),
+                    const SizedBox(height: TwinsSpacing.xl),
+                    Text('Recently added', style: TwinsTypography.heading(palette.textPrimary, size: 17)),
+                    const SizedBox(height: TwinsSpacing.sm),
+                    _RecentItemsStrip(spaceId: space.id, selected: _selected, onTap: _onItemTap, onLongPress: _toggle),
+                    if (allItems.isNotEmpty) ...[
+                      const SizedBox(height: TwinsSpacing.xl),
+                      Text('Everything', style: TwinsTypography.heading(palette.textPrimary, size: 17)),
+                      const SizedBox(height: TwinsSpacing.sm),
+                      Row(
+                        children: [
+                          TwinsFilterChip(label: 'All', selected: !_unfiledOnly, onTap: () => setState(() => _unfiledOnly = false)),
+                          const SizedBox(width: 6),
+                          TwinsFilterChip(
+                            label: 'Not in a folder',
+                            selected: _unfiledOnly,
+                            onTap: () => setState(() => _unfiledOnly = true),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: TwinsSpacing.sm),
+                      _EverythingGrid(
+                        items: _unfiledOnly ? allItems.where((i) => i.folderIds.isEmpty).toList() : allItems,
+                        selected: _selected,
+                        onTap: _onItemTap,
+                        onLongPress: _toggle,
+                      ),
+                    ],
+                    const SizedBox(height: TwinsSpacing.xxxl),
+                  ],
+                ),
+              ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+          error: (e, _) => Center(child: Text('Something went wrong.', style: TwinsTypography.body(palette.textSecondary))),
         ),
       ),
+    );
+  }
+}
+
+/// Every item in the space, newest first, so the home screen doubles as a
+/// place to sort things into folders (long-press to select).
+class _EverythingGrid extends StatelessWidget {
+  final List<TwinsItem> items;
+  final Set<String> selected;
+  final ValueChanged<TwinsItem> onTap;
+  final ValueChanged<String> onLongPress;
+
+  const _EverythingGrid({required this.items, required this.selected, required this.onTap, required this.onLongPress});
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: TwinsSpacing.xl),
+        child: Text('Everything is in a folder ✨', textAlign: TextAlign.center, style: TwinsTypography.body(context.twins.textSecondary)),
+      );
+    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: TwinsSpacing.sm,
+        crossAxisSpacing: TwinsSpacing.sm,
+        childAspectRatio: 0.78,
+      ),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return ItemCard(
+          item: item,
+          selected: selected.contains(item.id),
+          onTap: () => onTap(item),
+          onLongPress: () => onLongPress(item.id),
+        );
+      },
     );
   }
 }
@@ -129,7 +231,10 @@ class _FoldersGrid extends ConsumerWidget {
 
 class _RecentItemsStrip extends ConsumerWidget {
   final String spaceId;
-  const _RecentItemsStrip({required this.spaceId});
+  final Set<String> selected;
+  final ValueChanged<TwinsItem> onTap;
+  final ValueChanged<String> onLongPress;
+  const _RecentItemsStrip({required this.spaceId, required this.selected, required this.onTap, required this.onLongPress});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -137,11 +242,7 @@ class _RecentItemsStrip extends ConsumerWidget {
     return itemsAsync.when(
       data: (items) {
         if (items.isEmpty) {
-          return const EmptyState(
-            emoji: '📥',
-            title: 'Nothing here yet.',
-            subtitle: 'Send something from TikTok, YouTube, or anywhere.',
-          );
+          return const EmptyState(emoji: '📥', title: 'Nothing here yet.', subtitle: 'Send something from TikTok, YouTube, or anywhere.');
         }
         return SizedBox(
           height: 216,
@@ -151,12 +252,23 @@ class _RecentItemsStrip extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(width: TwinsSpacing.sm),
             itemBuilder: (context, index) {
               final item = items[index];
-              return SizedBox(width: 150, child: ItemCard(item: item, onTap: () => context.push('/item/${item.id}')));
+              return SizedBox(
+                width: 150,
+                child: ItemCard(
+                  item: item,
+                  selected: selected.contains(item.id),
+                  onTap: () => onTap(item),
+                  onLongPress: () => onLongPress(item.id),
+                ),
+              );
             },
           ),
         );
       },
-      loading: () => const SizedBox(height: 216, child: Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen))),
+      loading: () => const SizedBox(
+        height: 216,
+        child: Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+      ),
       error: (e, _) => const SizedBox.shrink(),
     );
   }
