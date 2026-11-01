@@ -9,6 +9,8 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/models/folder.dart';
 import '../../data/models/item.dart';
+import '../../state/ai_vision_provider.dart';
+import 'deploy_functions_sheet.dart';
 import '../../state/chat_naming_provider.dart';
 import '../../state/greeting_provider.dart';
 import '../../state/repository_provider.dart';
@@ -82,6 +84,21 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ]),
           const SizedBox(height: TwinsSpacing.lg),
+          const _SectionLabel('AI looks at'),
+          _SettingsGroup(children: [
+            for (final (label, value, update) in [
+              ('Thumbnail', ref.watch(aiVisionProvider).thumbnail, (bool v) => ref.read(aiVisionProvider).copyWith(thumbnail: v)),
+              ('First frame (YouTube)', ref.watch(aiVisionProvider).start, (bool v) => ref.read(aiVisionProvider).copyWith(start: v)),
+              ('Middle frame (YouTube)', ref.watch(aiVisionProvider).middle, (bool v) => ref.read(aiVisionProvider).copyWith(middle: v)),
+              ('Last frame (YouTube)', ref.watch(aiVisionProvider).end, (bool v) => ref.read(aiVisionProvider).copyWith(end: v)),
+            ])
+              _SettingsTile(
+                icon: PhosphorIconsRegular.eye,
+                label: label,
+                trailing: Switch(value: value, onChanged: (v) => ref.read(aiVisionProvider.notifier).set(update(v))),
+              ),
+          ]),
+          const SizedBox(height: TwinsSpacing.lg),
           const _SectionLabel('Our Space'),
           _SettingsGroup(children: [
             _SettingsTile(icon: PhosphorIconsRegular.folders, label: 'Manage folders', onTap: () => context.push('/settings/manage-folders')),
@@ -95,6 +112,15 @@ class SettingsScreen extends ConsumerWidget {
               icon: PhosphorIconsRegular.download,
               label: 'Import from a backup',
               onTap: () => _importSpace(context, ref),
+            ),
+          ]),
+          const SizedBox(height: TwinsSpacing.lg),
+          const _SectionLabel('Server'),
+          _SettingsGroup(children: [
+            _SettingsTile(
+              icon: PhosphorIconsRegular.cloudArrowUp,
+              label: 'Update server functions',
+              onTap: () => showDeployFunctionsSheet(context),
             ),
           ]),
           const SizedBox(height: TwinsSpacing.lg),

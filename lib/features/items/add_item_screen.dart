@@ -11,6 +11,7 @@ import '../../data/models/item.dart';
 import '../../data/models/item_type.dart';
 import '../../data/supabase/link_metadata_service.dart';
 import '../../state/auth_providers.dart';
+import '../../state/ai_vision_provider.dart';
 import '../../state/data_providers.dart';
 import '../../state/repository_provider.dart';
 import '../../theme/palette.dart';
@@ -172,7 +173,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
 
   Future<void> _tryResolveMetadata(String url) async {
     setState(() => _resolvingMetadata = true);
-    final meta = await resolveLinkMetadata(url);
+    final meta = await resolveLinkMetadata(url, vision: ref.read(aiVisionProvider).toJson());
     if (!mounted) return;
     setState(() {
       _resolvingMetadata = false;

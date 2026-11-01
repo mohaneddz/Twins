@@ -42,12 +42,12 @@ class LinkMetadata {
 ///
 /// Returns null on total failure - callers must always let the user save the
 /// raw URL regardless (spec section 16). Never throws.
-Future<LinkMetadata?> resolveLinkMetadata(String url) async {
+Future<LinkMetadata?> resolveLinkMetadata(String url, {Map<String, bool>? vision}) async {
   final uri = Uri.tryParse(url);
   if (uri == null || !(uri.isScheme('http') || uri.isScheme('https'))) return null;
 
   try {
-    final res = await supa.functions.invoke('resolve-link', body: {'url': url});
+    final res = await supa.functions.invoke('resolve-link', body: {'url': url, 'vision': ?vision});
     final data = res.data as Map<String, dynamic>?;
     if (data == null) return null;
     return LinkMetadata(
