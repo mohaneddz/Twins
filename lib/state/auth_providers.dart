@@ -21,7 +21,7 @@ final currentSpaceProvider = FutureProvider<TwinsSpace?>((ref) async {
   );
 });
 
-final spaceMembersProvider = FutureProvider.family<List<Profile>, String>((ref, spaceId) async {
+final spaceMembersProvider = StreamProvider.family<List<Profile>, String>((ref, spaceId) {
   final repo = ref.watch(repositoryProvider);
-  return repo.spaceMembers(spaceId);
+  return repo.watchSpaceMembers(spaceId);
 });

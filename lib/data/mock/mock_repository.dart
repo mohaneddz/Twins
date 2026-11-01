@@ -126,9 +126,9 @@ class MockTwinsRepository implements TwinsRepository {
   }
 
   @override
-  Future<List<Profile>> spaceMembers(String spaceId) async {
+  Stream<List<Profile>> watchSpaceMembers(String spaceId) async* {
     await _delay();
-    return [MockSeed.me, MockSeed.twin];
+    yield [_authed ?? MockSeed.me, MockSeed.twin];
   }
 
 

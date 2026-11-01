@@ -130,6 +130,9 @@ class SupabaseTwinsRepository implements TwinsRepository {
     final row = await supa.from('profiles').update(payload).eq('id', userId).select().single();
     final profile = Profile.fromJson(row);
     _cachedProfile = profile;
+    // Screens reading the signed-in profile (edit profile, chat, item detail)
+    // pick up the change without a restart.
+    _authController.add(profile);
     return profile;
   }
 
@@ -146,19 +149,16 @@ class SupabaseTwinsRepository implements TwinsRepository {
   }
 
   @override
-  Future<List<Profile>> spaceMembers(String spaceId) async {
-    final rows = await supa
-        .from('space_members')
-        .select('profiles(*)')
-        .eq('space_id', spaceId) as List;
-    return rows.map((r) => Profile.fromJson((r as Map)['profiles'] as Map<String, dynamic>)).toList();
+  Stream<List<Profile>> watchSpaceMembers(String spaceId) async* {
+    final rows = await supa.from('space_members').select('user_id').eq('space_id', spaceId) as List;
+    final ids = rows.map((r) => (r as Map)['user_id'] as String).toList();
+    yield* supa.from('profiles').stream(primaryKey: ['id']).inFilter('id', ids).map((rows) {
+      // Twin 1 first, so avatars and lists keep a stable order.
+      final sorted = [...rows]..sort((a, b) => ((a['slot'] as int?) ?? 9).compareTo((b['slot'] as int?) ?? 9));
+      return sorted.map(Profile.fromJson).toList();
+    });
   }
 
-
-
-
-
-  // ---- Folders ----
   @override
   Future<TwinsFolder?> getFolder(String folderId) async {
     final row = await supa.from('folders').select().eq('id', folderId).maybeSingle();

@@ -38,7 +38,8 @@ abstract class TwinsRepository {
 
   // ---- Space ----
   Future<TwinsSpace?> currentSpace();
-  Future<List<Profile>> spaceMembers(String spaceId);
+  /// Both twins' profiles, re-emitted whenever either of them edits theirs.
+  Stream<List<Profile>> watchSpaceMembers(String spaceId);
 
   // ---- Folders ----
   Future<TwinsFolder?> getFolder(String folderId);
