@@ -34,15 +34,16 @@ feed, no discovery.
 - **Data layer abstraction** (`lib/data/repositories/twins_repository.dart`):
   every screen talks to a single `TwinsRepository` interface. Two
   implementations exist:
-  - `MockTwinsRepository` (`lib/data/mock/`) — in-memory, seeded with
-    realistic demo data. Used automatically whenever Supabase credentials
-    are absent, so the whole app is explorable with zero setup.
-  - `SupabaseTwinsRepository` (`lib/data/supabase/`) — the real backend.
-  Which one is active is decided once, in `lib/state/repository_provider.dart`,
-  based on whether `.env` has Supabase credentials filled in.
-- **Edge Function** (`supabase/functions/resolve-link`): best-effort link
-  metadata (title/description/thumbnail) via oEmbed/OpenGraph, with optional
-  Groq polish. Runs server-side only.
+  - `SupabaseTwinsRepository` (`lib/data/supabase/`) — the real backend, and
+    the only one the app uses (`lib/state/repository_provider.dart`).
+  - `MockTwinsRepository` (`lib/data/mock/`) — in-memory, seeded with demo
+    data. Test-only: the widget and golden tests override
+    `repositoryProvider` with it.
+- **Edge Functions** (`supabase/functions/`): `resolve-link` builds link
+  previews with per-platform extractors (YouTube, TikTok, Instagram, X, …)
+  plus oEmbed/OpenGraph, keeps author/site/duration, and re-hosts thumbnails
+  into Storage; `suggest-tags` and `name-chat` are the Groq-backed AI helpers.
+  All AI calls run server-side only.
 - **Migrations** (`supabase/migrations/`): full schema + Row Level Security
   policies + the secure `join_space_with_code` RPC.
 - **Search** (`supabase/migrations/0009_search.sql`): a weighted `tsvector`
@@ -55,7 +56,7 @@ feed, no discovery.
 
 - Flutter 3.24+ (Dart 3.5+)
 - Xcode (iOS) / Android Studio or just the Android SDK (Android)
-- A Supabase project (optional — see "Running without Supabase" below)
+- A Supabase project (required — the app has no offline/demo mode)
 
 ## Install
 
@@ -69,19 +70,20 @@ flutter pub get
 flutter run
 ```
 
-The app works immediately with **no setup** — it starts in mock mode with a
-seeded demo space ("Mohaned & Rania") containing sample folders (Funny Reels,
-Date Ideas, Travel Plans, Random Stuff, Study Stuff) and items matching the
-designs in `design/`.
+A plain `flutter run`/`flutter build` has no project baked in: on first launch
+the app shows a setup screen asking for your Supabase project URL and
+publishable key, then caches them on the device.
 
-### Running against real Supabase
+### Build modes
 
-1. Fill in `.env` (copy values from `.env.example` if you reset it) — see
-   [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) for exactly how to get
-   each value.
-2. `flutter run` again. The app automatically switches to
-   `SupabaseTwinsRepository` the moment `EXPO_PUBLIC_SUPABASE_URL` and
-   `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are non-empty.
+- **Normal** (`scripts/build_normal.ps1`, or plain `flutter build`): nothing
+  baked in; first-launch setup screen as above.
+- **Special** (`scripts/build_special.ps1`): reads your local, git-ignored
+  `.env` and bakes the URL and key in via `--dart-define`, so the APK just
+  works — for handing straight to your twin.
+
+To populate a project with a demo pair ("Mohaned & Rania") and sample
+folders/items, run the seed script described under "Supabase setup".
 
 ### Incoming OS share ("Share to ¡Twins!")
 
@@ -123,13 +125,12 @@ cd supabase && npm install && npm run seed
 Two files, split by trust level (see `.env.example` and
 [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)):
 
-**`.env`** (repo root, bundled into the app, committed):
+**`.env`** (repo root, git-ignored; read only by `scripts/build_special.ps1`):
 
 | Variable | Where it's used | Required? |
 |---|---|---|
-| `EXPO_PUBLIC_SUPABASE_URL` | Flutter client | No (mock mode without it) |
-| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Flutter client | No (mock mode without it) |
-| `EXPO_PUBLIC_APP_SCHEME` | Flutter client (deep link scheme) | No, defaults to `twins` |
+| `EXPO_PUBLIC_SUPABASE_URL` | Baked in as `SUPABASE_URL` by the special build | Special build only |
+| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Baked in as `SUPABASE_PUBLISHABLE_KEY` by the special build | Special build only |
 
 **`supabase/.env`** (git-ignored, never bundled — server-side secrets):
 
