@@ -12,17 +12,25 @@ const _buildTimePublishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KE
 
 const _prefsUrlKey = 'twins_supabase_url';
 const _prefsPublishableKeyKey = 'twins_supabase_publishable_key';
+const _prefsSetupDoneKey = 'twins_setup_done';
 
 bool get isSpecialBuild => _buildTimeUrl.isNotEmpty && _buildTimePublishableKey.isNotEmpty;
 
-/// Whether we already know where to connect - either this is a special
-/// build, or someone completed first-launch setup on this device before.
-Future<bool> get hasStoredSupabaseConfig async {
-  if (isSpecialBuild) return true;
+/// Whether this device already finished first-launch setup: the project is
+/// known and its database was checked (or installed) for this app version.
+/// A special build still goes through setup once, so an empty project baked
+/// into it gets installed too.
+Future<bool> get isSetupComplete async {
   final prefs = await SharedPreferences.getInstance();
-  final url = prefs.getString(_prefsUrlKey);
-  final key = prefs.getString(_prefsPublishableKeyKey);
-  return url != null && url.isNotEmpty && key != null && key.isNotEmpty;
+  return prefs.getBool(_prefsSetupDoneKey) ?? false;
+}
+
+/// Values to prefill the setup screen with: the baked-in ones for a special
+/// build, otherwise whatever was saved last time.
+Future<({String url, String publishableKey})> get knownSupabaseConfig async {
+  if (isSpecialBuild) return (url: _buildTimeUrl, publishableKey: _buildTimePublishableKey);
+  final prefs = await SharedPreferences.getInstance();
+  return (url: prefs.getString(_prefsUrlKey) ?? '', publishableKey: prefs.getString(_prefsPublishableKeyKey) ?? '');
 }
 
 /// Initializes Supabase from whichever source has values: build-time first,
@@ -38,11 +46,13 @@ Future<void> initSupabaseFromStoredConfig() async {
   await Supabase.initialize(url: url, publishableKey: key);
 }
 
-/// Called by the first-launch setup screen once it has working values.
-Future<void> saveSupabaseConfig({required String url, required String publishableKey}) async {
+/// Called by the setup screen once the project is reachable and its schema
+/// is current.
+Future<void> completeSetup({required String url, required String publishableKey}) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(_prefsUrlKey, url);
   await prefs.setString(_prefsPublishableKeyKey, publishableKey);
+  await prefs.setBool(_prefsSetupDoneKey, true);
 }
 
 SupabaseClient get supa => Supabase.instance.client;

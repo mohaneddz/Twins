@@ -11,12 +11,12 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (await hasStoredSupabaseConfig) {
+  if (await isSetupComplete) {
     await initSupabaseFromStoredConfig();
     runApp(const ProviderScope(child: TwinsApp()));
   } else {
-    // No project baked in (a "normal" build) and none saved from a previous
-    // launch - ask for it once before touching anything Supabase-related.
+    // First launch on this device: connect to a project and make sure its
+    // database is installed before touching anything Supabase-related.
     runApp(ProviderScope(
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -28,7 +28,8 @@ Future<void> main() async {
   }
 }
 
-void _launchMainApp() {
+Future<void> _launchMainApp() async {
+  await initSupabaseFromStoredConfig();
   runApp(const ProviderScope(child: TwinsApp()));
 }
 

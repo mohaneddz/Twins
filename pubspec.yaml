@@ -70,6 +70,7 @@ dependencies:
   intl: ^0.19.0
   url_launcher: ^6.3.1
   collection: ^1.19.1
+  postgres: ^3.5.20
 
 dev_dependencies:
   flutter_test:
@@ -137,6 +138,11 @@ flutter:
 
   assets:
     - assets/
+    # Applied by SchemaInstaller when a fresh project is set up from the app.
+    - supabase/migrations/
+    - supabase/functions/resolve-link/
+    - supabase/functions/suggest-tags/
+    - supabase/functions/name-chat/
 
   # Bundled rather than fetched at runtime so the brand type is present on
   # first launch and offline. Both are variable fonts; weights are selected
