@@ -16,7 +16,7 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 - **Home "Everything" grid** under Recently added, with a Not in a folder filter.
 - **Unread badge on the bell** — counts what the other twin added or sent since Activity was last opened on this phone; message rows open their chat.
 - **Profile edits show instantly** (both twins' profiles stream over Realtime) and the profile page has pull-to-refresh.
-- **Chat**: keyboard no longer squeezes messages under the composer; chats auto-name after the 1st/2nd/3rd message (Settings → Chats, default 1st); the list shows each chat's latest message.
+- **Chat**: keyboard no longer squeezes messages under the composer; chats get their first name after N messages (default 1) and a fresh one every Y messages (default 20, or Never) from the latest messages — typed names are never replaced (`0016`); the list shows each chat's latest message.
 - **AI vision** (Settings → AI looks at) — Groq's `qwen/qwen3.8-27b` sees up to 3 images (YouTube start/middle/end frames and/or the thumbnail) and writes a description of what's actually in the video; falls back to the text model on failure. Settings → Update server functions redeploys the edge functions from the phone.
 - **Schema upgrades on app update** — setup stores the schema version it confirmed; an update needing a newer one reconnects automatically and only asks for the connection string if the DB is behind.
 - **Tests** — 34 Flutter tests; `supabase/tests/pairing_rls_test.sql` (12 checks) and `supabase/tests/twin_slots_test.sql` (8 checks), both rolled-back and safe on a live project.
@@ -29,7 +29,7 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 ## ⚠️ Still open
 
 - **Second twin's account** — slot 2 is still empty on the live project; create it from the other phone.
-- **Redeploy the edge functions** — the vision-enabled `resolve-link` is committed but not deployed: Settings → Update server functions with a Supabase access token. Until then previews use the older text-only version.
+- **AI vision not confirmed live** — after the first redeploy, vision on/off took the same time and gave text-only answers, so either the old function is still deployed or the server's Groq key can't use `qwen/qwen3.8-27b`. `resolve-link` now returns `ai_images` / `ai_vision_error`; redeploy (Settings → Update server functions) and check.
 - **Lint** (S) — ~19 `flutter analyze` infos, no errors.
 
 ## 👻 Known, deliberate non-features (not gaps)
