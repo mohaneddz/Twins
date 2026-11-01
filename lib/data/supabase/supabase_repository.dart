@@ -179,6 +179,13 @@ class SupabaseTwinsRepository implements TwinsRepository {
   }
 
   @override
+  Stream<List<TwinsFolder>> watchAllFolders(String spaceId) => supa
+      .from('folders')
+      .stream(primaryKey: ['id'])
+      .eq('space_id', spaceId)
+      .map((rows) => rows.map(TwinsFolder.fromJson).toList()..sort((a, b) => a.position.compareTo(b.position)));
+
+  @override
   Future<TwinsFolder> createFolder({
     required String spaceId,
     String? parentId,
@@ -212,7 +219,11 @@ class SupabaseTwinsRepository implements TwinsRepository {
   Stream<List<TwinsItem>> watchItems(String spaceId, {String? folderId, ItemType? type}) {
     final stream = supa.from('items').stream(primaryKey: ['id']).eq('space_id', spaceId);
     return stream.map((rows) {
-      var list = rows.where((r) => r['folder_id'] == folderId);
+      // folderId null means "not filed anywhere".
+      var list = rows.where((r) {
+        final ids = (r['folder_ids'] as List?) ?? const [];
+        return folderId == null ? ids.isEmpty : ids.contains(folderId);
+      });
       if (type != null) list = list.where((r) => r['type'] == type.name);
       return list.map(TwinsItem.fromJson).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     });
@@ -245,7 +256,7 @@ class SupabaseTwinsRepository implements TwinsRepository {
     // (same RLS-on-INSERT bug as createSpace/createInvite in 0012).
     final row = await supa.rpc('create_item', params: {
       'p_space_id': draft.spaceId,
-      'p_folder_id': draft.folderId,
+      'p_folder_ids': draft.folderIds,
       'p_type': draft.type.name,
       'p_platform': draft.platform.name,
       'p_source_url': draft.sourceUrl,
@@ -265,6 +276,10 @@ class SupabaseTwinsRepository implements TwinsRepository {
     final row = await supa.from('items').update(item.toJson()).eq('id', item.id).select().single();
     return TwinsItem.fromJson(row);
   }
+
+  @override
+  Future<void> setItemFolders(String itemId, List<String> folderIds) =>
+      supa.from('items').update({'folder_ids': folderIds}).eq('id', itemId);
 
   @override
   Future<void> deleteItem(String itemId) => supa.from('items').delete().eq('id', itemId);

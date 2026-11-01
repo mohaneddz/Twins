@@ -32,6 +32,11 @@ final foldersProvider = StreamProvider.family<List<TwinsFolder>, FolderQuery>((r
   return repo.watchFolders(query.spaceId, parentId: query.parentId);
 });
 
+final allFoldersProvider = StreamProvider.family<List<TwinsFolder>, String>((ref, spaceId) {
+  final repo = ref.watch(repositoryProvider);
+  return repo.watchAllFolders(spaceId);
+});
+
 class ItemQuery {
   final String spaceId;
   final String? folderId;

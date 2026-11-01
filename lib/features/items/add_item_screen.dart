@@ -19,6 +19,7 @@ import '../../theme/radius.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../utils/link_detector.dart';
+import '../folders/folder_dialogs.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/media_thumbnail.dart';
@@ -39,7 +40,7 @@ class AddItemScreen extends ConsumerStatefulWidget {
 
 class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   _AddMode _mode = _AddMode.menu;
-  String? _selectedFolderId;
+  final _selectedFolderIds = <String>{};
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _urlController = TextEditingController();
@@ -63,7 +64,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedFolderId = widget.initialFolderId;
+    if (widget.initialFolderId != null) _selectedFolderIds.add(widget.initialFolderId!);
     if (widget.sharedText != null && widget.sharedText!.isNotEmpty) {
       final link = linkFromSharedText(widget.sharedText!);
       _urlController.text = link;
@@ -338,7 +339,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           const SizedBox(height: TwinsSpacing.lg),
           _buildTagSelector(),
           const SizedBox(height: TwinsSpacing.lg),
-          _FolderTagPicker(selectedFolderId: _selectedFolderId, onFolderChanged: (id) => setState(() => _selectedFolderId = id)),
+          _FolderPicker(selected: _selectedFolderIds, onToggle: (id) => setState(() => _selectedFolderIds.contains(id) ? _selectedFolderIds.remove(id) : _selectedFolderIds.add(id))),
           const SizedBox(height: TwinsSpacing.xl),
           PrimaryButton(label: 'Save to ¡Twins!', loading: _saving, onPressed: _saveLink),
         ],
@@ -362,7 +363,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           const SizedBox(height: TwinsSpacing.lg),
           _buildTagSelector(),
           const SizedBox(height: TwinsSpacing.lg),
-          _FolderTagPicker(selectedFolderId: _selectedFolderId, onFolderChanged: (id) => setState(() => _selectedFolderId = id)),
+          _FolderPicker(selected: _selectedFolderIds, onToggle: (id) => setState(() => _selectedFolderIds.contains(id) ? _selectedFolderIds.remove(id) : _selectedFolderIds.add(id))),
           const SizedBox(height: TwinsSpacing.xl),
           PrimaryButton(label: 'Save note', loading: _saving, onPressed: _saveNote),
         ],
@@ -416,7 +417,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           const SizedBox(height: TwinsSpacing.lg),
           _buildTagSelector(),
           const SizedBox(height: TwinsSpacing.lg),
-          _FolderTagPicker(selectedFolderId: _selectedFolderId, onFolderChanged: (id) => setState(() => _selectedFolderId = id)),
+          _FolderPicker(selected: _selectedFolderIds, onToggle: (id) => setState(() => _selectedFolderIds.contains(id) ? _selectedFolderIds.remove(id) : _selectedFolderIds.add(id))),
           const SizedBox(height: TwinsSpacing.lg),
           if (_saving) ...[
             LinearProgressIndicator(
@@ -466,7 +467,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           const SizedBox(height: TwinsSpacing.lg),
           _buildTagSelector(),
           const SizedBox(height: TwinsSpacing.lg),
-          _FolderTagPicker(selectedFolderId: _selectedFolderId, onFolderChanged: (id) => setState(() => _selectedFolderId = id)),
+          _FolderPicker(selected: _selectedFolderIds, onToggle: (id) => setState(() => _selectedFolderIds.contains(id) ? _selectedFolderIds.remove(id) : _selectedFolderIds.add(id))),
           const SizedBox(height: TwinsSpacing.lg),
           if (_saving) ...[
             LinearProgressIndicator(
@@ -517,7 +518,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
     await _save(TwinsItem(
       id: '',
       spaceId: '',
-      folderId: _selectedFolderId,
+      folderIds: _selectedFolderIds.toList(),
       createdBy: '',
       type: _detectedType,
       platform: detectLink(url).platform,
@@ -540,7 +541,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
     await _save(TwinsItem(
       id: '',
       spaceId: '',
-      folderId: _selectedFolderId,
+      folderIds: _selectedFolderIds.toList(),
       createdBy: '',
       type: ItemType.note,
       title: _titleController.text.trim().isEmpty ? 'Untitled note' : _titleController.text.trim(),
@@ -573,7 +574,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       final created = await repo.createItem(TwinsItem(
         id: '',
         spaceId: space.id,
-        folderId: _selectedFolderId,
+        folderIds: _selectedFolderIds.toList(),
         createdBy: '',
         type: _detectedType,
         platform: ItemPlatform.device,
@@ -617,7 +618,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       final created = await repo.createItem(TwinsItem(
             id: '',
             spaceId: space.id,
-            folderId: draft.folderId,
+            folderIds: draft.folderIds,
             createdBy: '',
             type: draft.type,
             platform: draft.platform,
@@ -687,46 +688,41 @@ class _MenuOption extends StatelessWidget {
   }
 }
 
-class _FolderTagPicker extends ConsumerWidget {
-  final String? selectedFolderId;
-  final ValueChanged<String?> onFolderChanged;
+/// Folders to file the new item into - any number of them, or none.
+class _FolderPicker extends ConsumerWidget {
+  final Set<String> selected;
+  final ValueChanged<String> onToggle;
 
-  const _FolderTagPicker({required this.selectedFolderId, required this.onFolderChanged});
+  const _FolderPicker({required this.selected, required this.onToggle});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final spaceAsync = ref.watch(currentSpaceProvider);
-    return spaceAsync.when(
-      data: (space) {
-        if (space == null) return const SizedBox.shrink();
-        final foldersAsync = ref.watch(foldersProvider(FolderQuery(space.id, null)));
-        return foldersAsync.when(
-          data: (folders) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Save to folder', style: TwinsTypography.label(context.twins.textSecondary)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: folders
-                      .map((f) => ChoiceChip(
-                            label: Text('${f.icon} ${f.name}'),
-                            selected: selectedFolderId == f.id,
-                            onSelected: (_) => onFolderChanged(selectedFolderId == f.id ? null : f.id),
-                          ))
-                      .toList(),
-                ),
-              ],
-            );
-          },
-          loading: () => const SizedBox.shrink(),
-          error: (e, _) => const SizedBox.shrink(),
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (e, _) => const SizedBox.shrink(),
+    final space = ref.watch(currentSpaceProvider).valueOrNull;
+    if (space == null) return const SizedBox.shrink();
+    final folders = ref.watch(allFoldersProvider(space.id)).valueOrNull ?? const [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Add to folders', style: TwinsTypography.label(context.twins.textSecondary)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final (folder, _) in folderTree(folders))
+              FilterChip(
+                label: Text('${folder.icon} ${folder.name}'),
+                selected: selected.contains(folder.id),
+                onSelected: (_) => onToggle(folder.id),
+              ),
+            ActionChip(
+              avatar: const Icon(Icons.add, size: 18),
+              label: const Text('New folder'),
+              onPressed: () => showCreateFolderSheet(context, ref, spaceId: space.id, parentId: null),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

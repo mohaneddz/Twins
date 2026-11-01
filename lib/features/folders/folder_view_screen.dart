@@ -6,17 +6,15 @@ import 'package:share_plus/share_plus.dart';
 import '../../data/models/item_type.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
-import '../../state/repository_provider.dart';
 import '../../theme/colors.dart';
 import '../../theme/palette.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/confirm_dialog.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/filter_chip_twins.dart';
 import '../../widgets/folder_card.dart';
 import '../../widgets/item_card.dart';
-import '../../widgets/toast.dart';
+import '../../widgets/item_selection_bar.dart';
 import 'folder_dialogs.dart';
 
 class FolderViewScreen extends ConsumerStatefulWidget {
@@ -169,87 +167,25 @@ class _FolderViewScreenState extends ConsumerState<FolderViewScreen> {
               onPressed: () => context.push('/add', extra: {'folderId': widget.folderId}),
               child: const Icon(Icons.add, color: Colors.white),
             ),
-      bottomNavigationBar: (_selecting && _selected.isNotEmpty)
-          ? _SelectionBar(
-              count: _selected.length,
-              onMove: () => _moveSelected(spaceAsync.valueOrNull?.id),
-              onDelete: _deleteSelected,
-            )
-          : null,
+      bottomNavigationBar: _selectionBar(spaceAsync.valueOrNull?.id),
     );
   }
 
-  Future<void> _deleteSelected() async {
-    final confirmed = await showConfirmDialog(
-      context,
-      title: 'Delete ${_selected.length} ${_selected.length == 1 ? 'item' : 'items'}?',
-      message: 'This removes them for both of you. This cannot be undone.',
-    );
-    if (!confirmed) return;
-    final repo = ref.read(repositoryProvider);
-    for (final id in _selected) {
-      await repo.deleteItem(id);
-    }
-    if (mounted) {
-      setState(() {
-        _selecting = false;
-        _selected.clear();
-      });
-    }
-  }
-
-  Future<void> _moveSelected(String? spaceId) async {
-    if (spaceId == null) return;
-    final targetId = await showMoveToFolderSheet(context, ref, spaceId, excludeFolderId: widget.folderId);
-    if (targetId == null) return;
-    final repo = ref.read(repositoryProvider);
-    for (final id in _selected) {
-      final item = await repo.getItem(id);
-      if (item != null) await repo.updateItem(item.copyWith(folderId: targetId));
-    }
-    if (mounted) {
-      setState(() {
-        _selecting = false;
-        _selected.clear();
-      });
-      showTwinsToast(context, 'Moved');
-    }
-  }
-}
-
-class _SelectionBar extends StatelessWidget {
-  final int count;
-  final VoidCallback onMove;
-  final VoidCallback onDelete;
-  const _SelectionBar({required this.count, required this.onMove, required this.onDelete});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).colorScheme.surface,
-      elevation: 12,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: TwinsSpacing.md, vertical: TwinsSpacing.sm),
-          child: Row(
-            children: [
-              Text('$count selected', style: TwinsTypography.label(Theme.of(context).colorScheme.onSurface)),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: onMove,
-                icon: const Icon(PhosphorIconsRegular.folderSimple, size: 20),
-                label: const Text('Move'),
-              ),
-              TextButton.icon(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline, size: 20, color: TwinsColors.danger),
-                label: const Text('Delete', style: TextStyle(color: TwinsColors.danger)),
-              ),
-            ],
-          ),
-        ),
-      ),
+  Widget? _selectionBar(String? spaceId) {
+    if (!_selecting || _selected.isEmpty || spaceId == null) return null;
+    final items = ref.watch(itemsProvider(ItemQuery(spaceId, widget.folderId, _filter))).valueOrNull ?? const [];
+    return ItemSelectionBar(
+      spaceId: spaceId,
+      currentFolderId: widget.folderId,
+      items: items.where((i) => _selected.contains(i.id)).toList(),
+      onDone: () {
+        if (mounted) {
+          setState(() {
+            _selecting = false;
+            _selected.clear();
+          });
+        }
+      },
     );
   }
 }

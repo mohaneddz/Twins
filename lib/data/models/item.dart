@@ -3,7 +3,8 @@ import 'item_type.dart';
 class TwinsItem {
   final String id;
   final String spaceId;
-  final String? folderId;
+  /// Every folder the item is filed in; empty when it's in none.
+  final List<String> folderIds;
   final String createdBy;
   final ItemType type;
   final ItemPlatform platform;
@@ -25,7 +26,7 @@ class TwinsItem {
   const TwinsItem({
     required this.id,
     required this.spaceId,
-    this.folderId,
+    this.folderIds = const [],
     required this.createdBy,
     required this.type,
     this.platform = ItemPlatform.device,
@@ -52,7 +53,7 @@ class TwinsItem {
   String? get sourceFaviconUrl => metadata['favicon_url'] as String?;
 
   TwinsItem copyWith({
-    String? folderId,
+    List<String>? folderIds,
     String? title,
     String? description,
     String? content,
@@ -64,7 +65,7 @@ class TwinsItem {
     return TwinsItem(
       id: id,
       spaceId: spaceId,
-      folderId: folderId ?? this.folderId,
+      folderIds: folderIds ?? this.folderIds,
       createdBy: createdBy,
       type: type,
       platform: platform,
@@ -88,7 +89,9 @@ class TwinsItem {
   factory TwinsItem.fromJson(Map<String, dynamic> json) => TwinsItem(
         id: json['id'] as String,
         spaceId: json['space_id'] as String,
-        folderId: json['folder_id'] as String?,
+        // Backups exported before multi-folder items carry a single folder_id.
+        folderIds: (json['folder_ids'] as List?)?.cast<String>() ??
+            [if (json['folder_id'] != null) json['folder_id'] as String],
         createdBy: json['created_by'] as String,
         type: ItemType.fromString(json['type'] as String),
         platform: ItemPlatform.fromString(json['platform'] as String?),
@@ -110,7 +113,7 @@ class TwinsItem {
 
   Map<String, dynamic> toJson() => {
         'space_id': spaceId,
-        'folder_id': folderId,
+        'folder_ids': folderIds,
         'type': type.name,
         'platform': platform.name,
         'source_url': sourceUrl,

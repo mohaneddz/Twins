@@ -167,7 +167,7 @@ class SettingsScreen extends ConsumerWidget {
         await repo.createItem(TwinsItem(
           id: item.id,
           spaceId: space.id,
-          folderId: item.folderId != null ? folderIdMap[item.folderId] : null,
+          folderIds: [for (final id in item.folderIds) if (folderIdMap[id] != null) folderIdMap[id]!],
           createdBy: item.createdBy,
           type: item.type,
           platform: item.platform,

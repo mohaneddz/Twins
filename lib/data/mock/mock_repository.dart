@@ -150,12 +150,20 @@ class MockTwinsRepository implements TwinsRepository {
     }
   }
 
+  @override
+  Stream<List<TwinsFolder>> watchAllFolders(String spaceId) async* {
+    yield List.of(_folders);
+    await for (final _ in _foldersController.stream) {
+      yield List.of(_folders);
+    }
+  }
+
   List<TwinsFolder> _visibleFolders(String? parentId) => _folders
       .where((f) => f.parentId == parentId)
       // Compute item counts live from _items so they stay correct as items are
       // added, deleted, or moved between folders (matches the DB trigger in
       // migration 0008).
-      .map((f) => f.copyWith(itemCount: _items.where((i) => i.folderId == f.id).length))
+      .map((f) => f.copyWith(itemCount: _items.where((i) => i.folderIds.contains(f.id)).length))
       .toList()
     ..sort((a, b) {
       if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
@@ -200,7 +208,7 @@ class MockTwinsRepository implements TwinsRepository {
   Future<void> deleteFolder(String folderId) async {
     await _delay();
     _folders.removeWhere((f) => f.id == folderId || f.parentId == folderId);
-    _items.removeWhere((i) => i.folderId == folderId);
+    _items = [for (final i in _items) i.copyWith(folderIds: i.folderIds.where((id) => id != folderId).toList())];
     _foldersController.add(null);
     _itemsController.add(null);
   }
@@ -215,7 +223,7 @@ class MockTwinsRepository implements TwinsRepository {
   }
 
   List<TwinsItem> _visibleItems(String? folderId, ItemType? type) {
-    var list = _items.where((i) => i.folderId == folderId);
+    var list = _items.where((i) => folderId == null ? i.folderIds.isEmpty : i.folderIds.contains(folderId));
     if (type != null) list = list.where((i) => i.type == type);
     return list.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
@@ -258,7 +266,7 @@ class MockTwinsRepository implements TwinsRepository {
     final item = TwinsItem(
       id: _uuid.v4(),
       spaceId: draft.spaceId,
-      folderId: draft.folderId,
+      folderIds: draft.folderIds,
       createdBy: _authed?.id ?? MockSeed.meId,
       type: draft.type,
       platform: draft.platform,
@@ -292,6 +300,14 @@ class MockTwinsRepository implements TwinsRepository {
   }
 
   @override
+  Future<void> setItemFolders(String itemId, List<String> folderIds) async {
+    await _delay(ms: 80);
+    _items = [for (final i in _items) i.id == itemId ? i.copyWith(folderIds: folderIds) : i];
+    _itemsController.add(null);
+    _foldersController.add(null);
+  }
+
+  @override
   Future<void> deleteItem(String itemId) async {
     await _delay();
     _items.removeWhere((i) => i.id == itemId);
@@ -317,7 +333,7 @@ class MockTwinsRepository implements TwinsRepository {
       if (i.spaceId != spaceId) continue;
       if (type != null && i.type != type) continue;
 
-      final folderName = _folders.firstWhereOrNull((f) => f.id == i.folderId)?.name.toLowerCase() ?? '';
+      final folderName = _folders.where((f) => i.folderIds.contains(f.id)).map((f) => f.name.toLowerCase()).join(' ');
       final tagNames = i.tagIds
           .map((id) => _tags.firstWhereOrNull((t) => t.id == id)?.name.toLowerCase() ?? '')
           .join(' ');

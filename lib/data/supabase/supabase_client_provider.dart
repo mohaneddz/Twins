@@ -1,6 +1,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'project_setup.dart';
+
 /// A "special" build bakes these in at build time via
 /// `--dart-define-from-file` (see scripts/build_special.ps1), reading from a
 /// local, git-ignored .env - the source tree itself never contains real
@@ -12,17 +14,18 @@ const _buildTimePublishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KE
 
 const _prefsUrlKey = 'twins_supabase_url';
 const _prefsPublishableKeyKey = 'twins_supabase_publishable_key';
-const _prefsSetupDoneKey = 'twins_setup_done';
+const _prefsSetupSchemaKey = 'twins_setup_schema_version';
 
 bool get isSpecialBuild => _buildTimeUrl.isNotEmpty && _buildTimePublishableKey.isNotEmpty;
 
-/// Whether this device already finished first-launch setup: the project is
-/// known and its database was checked (or installed) for this app version.
-/// A special build still goes through setup once, so an empty project baked
-/// into it gets installed too.
+/// Whether this device finished setup for the schema this build needs. An
+/// app update that needs a newer schema sends it back through setup, which
+/// reconnects on its own and only asks for anything if the database really
+/// is behind. A special build still goes through setup once, so an empty
+/// project baked into it gets installed too.
 Future<bool> get isSetupComplete async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getBool(_prefsSetupDoneKey) ?? false;
+  return (prefs.getInt(_prefsSetupSchemaKey) ?? 0) >= requiredSchemaVersion;
 }
 
 /// Values to prefill the setup screen with: the baked-in ones for a special
@@ -52,7 +55,7 @@ Future<void> completeSetup({required String url, required String publishableKey}
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(_prefsUrlKey, url);
   await prefs.setString(_prefsPublishableKeyKey, publishableKey);
-  await prefs.setBool(_prefsSetupDoneKey, true);
+  await prefs.setInt(_prefsSetupSchemaKey, requiredSchemaVersion);
 }
 
 SupabaseClient get supa => Supabase.instance.client;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/folder.dart';
+import '../../data/models/item.dart';
 import '../../state/data_providers.dart';
 import '../../state/repository_provider.dart';
 import '../../theme/colors.dart';
@@ -111,64 +112,108 @@ Future<void> showRenameFolderSheet(BuildContext context, WidgetRef ref, TwinsFol
   );
 }
 
-/// Presents the space's folders and resolves to the chosen folder id (or null
-/// if dismissed). [excludeFolderId] hides one folder (e.g. the current one).
-Future<String?> showMoveToFolderSheet(
+/// Files [items] into any number of folders. A row is ticked when every item
+/// is in that folder (a dash when only some are); tapping applies right away,
+/// adding to all of them, or removing from all of them when it was ticked.
+Future<void> showAddToFolderSheet(
   BuildContext context,
-  WidgetRef ref,
-  String spaceId, {
-  String? excludeFolderId,
-}) {
-  return showModalBottomSheet<String>(
+  WidgetRef ref, {
+  required String spaceId,
+  required List<TwinsItem> items,
+}) async {
+  final membership = {for (final item in items) item.id: item.folderIds.toSet()};
+  await showModalBottomSheet<void>(
     context: context,
+    isScrollControlled: true,
     backgroundColor: Theme.of(context).colorScheme.surface,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (sheetContext) => SafeArea(
-      child: Consumer(
-        builder: (context, ref, _) {
-          final foldersAsync = ref.watch(foldersProvider(FolderQuery(spaceId, null)));
-          return foldersAsync.when(
-            data: (folders) {
-              final choices = folders.where((f) => f.id != excludeFolderId).toList();
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(sheetContext).size.height * 0.7),
+        child: Consumer(
+          builder: (context, ref, _) => StatefulBuilder(
+            builder: (context, setState) {
+              final folders = ref.watch(allFoldersProvider(spaceId)).valueOrNull;
+              Future<void> toggle(TwinsFolder folder) async {
+                final inAll = membership.values.every((ids) => ids.contains(folder.id));
+                setState(() {
+                  for (final ids in membership.values) {
+                    inAll ? ids.remove(folder.id) : ids.add(folder.id);
+                  }
+                });
+                final repo = ref.read(repositoryProvider);
+                for (final entry in membership.entries) {
+                  await repo.setItemFolders(entry.key, entry.value.toList());
+                  ref.invalidate(itemByIdProvider(entry.key));
+                }
+              }
+
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(TwinsSpacing.md),
-                    child: Text('Move to folder',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: Theme.of(context).colorScheme.onSurface)),
+                    child: Text(
+                      items.length == 1 ? 'Add to folder' : 'Add ${items.length} items to folder',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
+                    ),
                   ),
-                  if (choices.isEmpty)
+                  if (folders == null)
                     const Padding(
-                      padding: EdgeInsets.all(TwinsSpacing.lg),
-                      child: Text('No other folders yet.'),
+                      padding: EdgeInsets.all(TwinsSpacing.xl),
+                      child: CircularProgressIndicator(color: TwinsColors.mikuGreen),
+                    )
+                  else
+                    Flexible(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          for (final (folder, depth) in folderTree(folders))
+                            CheckboxListTile(
+                              tristate: true,
+                              value: switch (membership.values.where((ids) => ids.contains(folder.id)).length) {
+                                0 => false,
+                                final n when n == membership.length => true,
+                                _ => null,
+                              },
+                              onChanged: (_) => toggle(folder),
+                              activeColor: TwinsColors.mikuGreen,
+                              controlAffinity: ListTileControlAffinity.trailing,
+                              contentPadding: EdgeInsets.only(left: TwinsSpacing.md + depth * 20.0, right: TwinsSpacing.sm),
+                              secondary: Text(folder.icon, style: const TextStyle(fontSize: 22)),
+                              title: Text(folder.name),
+                            ),
+                          ListTile(
+                            leading: const Icon(Icons.add, color: TwinsColors.mikuGreen),
+                            title: const Text('New folder'),
+                            onTap: () => showCreateFolderSheet(context, ref, spaceId: spaceId, parentId: null),
+                          ),
+                        ],
+                      ),
                     ),
-                  Flexible(
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: choices
-                          .map((f) => ListTile(
-                                leading: Text(f.icon, style: const TextStyle(fontSize: 22)),
-                                title: Text(f.name),
-                                onTap: () => Navigator.of(sheetContext).pop(f.id),
-                              ))
-                          .toList(),
-                    ),
-                  ),
                   const SizedBox(height: TwinsSpacing.sm),
                 ],
               );
             },
-            loading: () => const Padding(
-              padding: EdgeInsets.all(TwinsSpacing.xl),
-              child: Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
-            ),
-            error: (e, _) => const SizedBox.shrink(),
-          );
-        },
+          ),
+        ),
       ),
     ),
   );
+}
+
+/// Folders in display order, each child right under its parent, with its depth.
+List<(TwinsFolder, int)> folderTree(List<TwinsFolder> folders) {
+  final result = <(TwinsFolder, int)>[];
+  void visit(String? parentId, int depth) {
+    for (final folder in folders.where((f) => f.parentId == parentId)) {
+      result.add((folder, depth));
+      visit(folder.id, depth + 1);
+    }
+  }
+
+  visit(null, 0);
+  return result;
 }
 
 Future<void> showFolderOptionsSheet(BuildContext context, WidgetRef ref, TwinsFolder folder) async {

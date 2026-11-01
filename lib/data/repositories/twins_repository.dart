@@ -43,6 +43,9 @@ abstract class TwinsRepository {
   // ---- Folders ----
   Future<TwinsFolder?> getFolder(String folderId);
   Stream<List<TwinsFolder>> watchFolders(String spaceId, {String? parentId});
+
+  /// Every folder in the space at any depth, for pickers.
+  Stream<List<TwinsFolder>> watchAllFolders(String spaceId);
   Future<TwinsFolder> createFolder({
     required String spaceId,
     String? parentId,
@@ -63,6 +66,7 @@ abstract class TwinsRepository {
   Future<TwinsItem?> getItem(String itemId);
   Future<TwinsItem> createItem(TwinsItem draft);
   Future<TwinsItem> updateItem(TwinsItem item);
+  Future<void> setItemFolders(String itemId, List<String> folderIds);
   Future<void> deleteItem(String itemId);
   /// Relevance-ranked search across item text, tag names and folder names.
   /// [type] narrows to a single kind of item; null means "all".

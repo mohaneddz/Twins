@@ -108,7 +108,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-1',
       spaceId: spaceId,
-      folderId: 'folder-reels',
+      folderIds: ['folder-reels'],
       createdBy: meId,
       type: ItemType.tiktok,
       platform: ItemPlatform.tiktok,
@@ -126,7 +126,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-2',
       spaceId: spaceId,
-      folderId: 'folder-reels',
+      folderIds: ['folder-reels'],
       createdBy: twinId,
       type: ItemType.tiktok,
       platform: ItemPlatform.tiktok,
@@ -142,7 +142,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-3',
       spaceId: spaceId,
-      folderId: 'folder-reels',
+      folderIds: ['folder-reels'],
       createdBy: meId,
       type: ItemType.tiktok,
       platform: ItemPlatform.tiktok,
@@ -156,7 +156,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-4',
       spaceId: spaceId,
-      folderId: 'folder-reels',
+      folderIds: ['folder-reels'],
       createdBy: twinId,
       type: ItemType.tiktok,
       platform: ItemPlatform.tiktok,
@@ -170,7 +170,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-5',
       spaceId: spaceId,
-      folderId: 'folder-reels',
+      folderIds: ['folder-reels'],
       createdBy: meId,
       type: ItemType.tiktok,
       platform: ItemPlatform.tiktok,
@@ -184,7 +184,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-6',
       spaceId: spaceId,
-      folderId: 'folder-reels',
+      folderIds: ['folder-reels'],
       createdBy: twinId,
       type: ItemType.note,
       title: 'Movie night ideas',
@@ -195,7 +195,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-7',
       spaceId: spaceId,
-      folderId: 'folder-travel',
+      folderIds: ['folder-travel'],
       createdBy: meId,
       type: ItemType.youtube,
       platform: ItemPlatform.youtube,
@@ -213,7 +213,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-8',
       spaceId: spaceId,
-      folderId: 'folder-random',
+      folderIds: ['folder-random'],
       createdBy: twinId,
       type: ItemType.image,
       thumbnailUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600',
@@ -225,7 +225,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-9',
       spaceId: spaceId,
-      folderId: 'folder-random',
+      folderIds: ['folder-random'],
       createdBy: meId,
       type: ItemType.image,
       thumbnailUrl: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600',
@@ -236,7 +236,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-10',
       spaceId: spaceId,
-      folderId: 'folder-random',
+      folderIds: ['folder-random'],
       createdBy: twinId,
       type: ItemType.note,
       title: 'room lighting ideas',
@@ -247,7 +247,7 @@ class MockSeed {
     TwinsItem(
       id: 'item-11',
       spaceId: spaceId,
-      folderId: 'folder-dates',
+      folderIds: ['folder-dates'],
       createdBy: meId,
       type: ItemType.link,
       sourceUrl: 'https://www.timeout.com/things-to-do',

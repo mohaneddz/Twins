@@ -45,7 +45,8 @@ class _SupabaseSetupScreenState extends State<SupabaseSetupScreen> {
       if (!mounted) return;
       _url.text = config.url;
       _key.text = config.publishableKey;
-      if (isSpecialBuild) _connect();
+      // Known project (special build, or an app update): check it right away.
+      if (config.url.isNotEmpty && config.publishableKey.isNotEmpty) _connect();
     });
   }
 

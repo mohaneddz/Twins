@@ -10,6 +10,7 @@ import '../../data/models/item.dart';
 import '../../data/models/item_type.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/reaction.dart';
+import '../folders/folder_dialogs.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
 import '../../state/repository_provider.dart';
@@ -338,10 +339,10 @@ class _ItemDetailBody extends ConsumerWidget {
           children: [
             ListTile(
               leading: const Icon(PhosphorIconsRegular.folderSimple),
-              title: const Text('Move to folder'),
+              title: const Text('Add to folder'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
-                _showMoveToFolder(context, ref);
+                showAddToFolderSheet(context, ref, spaceId: item.spaceId, items: [item]);
               },
             ),
             ListTile(
@@ -379,58 +380,6 @@ class _ItemDetailBody extends ConsumerWidget {
     );
   }
 
-  void _showMoveToFolder(BuildContext context, WidgetRef ref) async {
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (sheetContext) => SafeArea(
-        child: Consumer(
-          builder: (context, ref, _) {
-            final foldersAsync = ref.watch(foldersProvider(FolderQuery(item.spaceId, null)));
-            return foldersAsync.when(
-              data: (folders) => Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(TwinsSpacing.md),
-                    child: Text('Move to folder', style: TwinsTypography.heading(Theme.of(context).colorScheme.onSurface, size: 16)),
-                  ),
-                  Flexible(
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: folders.map((f) {
-                        final isCurrent = f.id == item.folderId;
-                        return ListTile(
-                          leading: Text(f.icon, style: const TextStyle(fontSize: 22)),
-                          title: Text(f.name),
-                          trailing: isCurrent ? const Icon(PhosphorIconsFill.checkCircle, color: TwinsColors.mikuGreen) : null,
-                          onTap: isCurrent
-                              ? null
-                              : () async {
-                                  Navigator.of(sheetContext).pop();
-                                  await ref.read(repositoryProvider).updateItem(item.copyWith(folderId: f.id));
-                                  ref.invalidate(itemByIdProvider(item.id));
-                                  if (context.mounted) showTwinsToast(context, 'Moved to ${f.name}');
-                                },
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: TwinsSpacing.sm),
-                ],
-              ),
-              loading: () => const Padding(
-                padding: EdgeInsets.all(TwinsSpacing.xl),
-                child: Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
-              ),
-              error: (e, _) => const SizedBox.shrink(),
-            );
-          },
-        ),
-      ),
-    );
-  }
 }
 
 /// Tag chips on the item detail. Tapping one opens search pre-filled with that
