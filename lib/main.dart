@@ -4,6 +4,7 @@ import 'data/supabase/supabase_client_provider.dart';
 import 'features/setup/supabase_setup_screen.dart';
 import 'routing/app_router.dart';
 import 'sharing/share_intent_service.dart';
+import 'sharing/share_shortcut.dart';
 import 'state/auth_providers.dart';
 import 'state/theme_provider.dart';
 import 'theme/app_theme.dart';
@@ -62,6 +63,14 @@ class _TwinsAppState extends ConsumerState<TwinsApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    ref.listen(currentSpaceProvider, (_, next) {
+      final space = next.valueOrNull;
+      if (space != null) {
+        ShareShortcut.publish(space.name);
+      } else if (!next.isLoading) {
+        ShareShortcut.remove();
+      }
+    });
 
     return MaterialApp.router(
       title: '¡Twins!',
