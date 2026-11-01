@@ -419,44 +419,89 @@ async function resolveWeb(url: URL): Promise<Metadata> {
 // Optional AI polish
 // ---------------------------------------------------------------------------
 
-async function polishWithGroq(meta: Metadata): Promise<Metadata> {
+// Which images the AI may look at, chosen per phone in Settings → AI.
+// Frames exist for YouTube only (its auto-captured start/middle/end stills).
+type VisionOptions = { thumbnail?: boolean; start?: boolean; middle?: boolean; end?: boolean };
+
+// Groq's vision model takes at most 3 images; the mq stills keep a save at
+// ~2.5k tokens, well inside the free tier's per-minute budget.
+const VISION_MODEL = "qwen/qwen3.8-27b";
+const TEXT_MODEL = "openai/gpt-oss-20b";
+const MAX_IMAGES = 3;
+
+function visionImages(meta: Metadata, url: URL, vision: VisionOptions | undefined): string[] {
+  if (!vision) return [];
+  const images: string[] = [];
+  const id = meta.platform === "youtube" ? youtubeId(url) : null;
+  if (id) {
+    if (vision.start) images.push(`https://i.ytimg.com/vi/${id}/mq1.jpg`);
+    if (vision.middle) images.push(`https://i.ytimg.com/vi/${id}/mq2.jpg`);
+    if (vision.end) images.push(`https://i.ytimg.com/vi/${id}/mq3.jpg`);
+  }
+  if (vision.thumbnail) {
+    const thumb = id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : meta.thumbnail_url;
+    if (thumb) images.push(thumb);
+  }
+  return images.slice(0, MAX_IMAGES);
+}
+
+async function askGroq(apiKey: string, meta: Metadata, images: string[]): Promise<Record<string, unknown> | null> {
+  const text = `Title: ${meta.title}\nDescription: ${meta.description ?? ""}`;
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: images.length > 0 ? VISION_MODEL : TEXT_MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You clean up social-media video/link titles for a private bookmarking app. " +
+            'Respond ONLY with JSON: {"title": string, "summary": string, "tags": string[]}. ' +
+            "title: a short punchy version of the original title (keep it under 60 chars, keep emoji if present). " +
+            (images.length > 0
+              ? "summary: one or two sentences describing what actually happens or appears, based on the images (frames from the video and/or its thumbnail) together with the title. "
+              : "summary: one short sentence describing the content. ") +
+            "tags: 2-4 lowercase single-word topic tags, no hashtags.",
+        },
+        {
+          role: "user",
+          content: images.length > 0
+            ? [{ type: "text", text }, ...images.map((url) => ({ type: "image_url", image_url: { url } }))]
+            : text,
+        },
+      ],
+      temperature: 0.4,
+      response_format: { type: "json_object" },
+    }),
+    signal: AbortSignal.timeout(images.length > 0 ? 15000 : 8000),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const content = data.choices?.[0]?.message?.content;
+  return content ? JSON.parse(content) : null;
+}
+
+async function polishWithGroq(meta: Metadata, url: URL, vision?: VisionOptions): Promise<Metadata> {
   const apiKey = Deno.env.get("GROQ_API_KEY");
   if (!apiKey || !meta.title) return meta;
 
   try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-oss-20b",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You clean up social-media video/link titles for a private bookmarking app. " +
-              'Given a raw title and description, respond ONLY with JSON: {"title": string, "summary": string, "tags": string[]}. ' +
-              "title: a short punchy version of the original title (keep it under 60 chars, keep emoji if present). " +
-              "summary: one short sentence describing the content. " +
-              "tags: 2-4 lowercase single-word topic tags, no hashtags.",
-          },
-          {
-            role: "user",
-            content: `Title: ${meta.title}\nDescription: ${meta.description ?? ""}`,
-          },
-        ],
-        temperature: 0.4,
-        response_format: { type: "json_object" },
-      }),
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return meta;
-    const data = await res.json();
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) return meta;
-    const parsed = JSON.parse(content);
+    const images = visionImages(meta, url, vision);
+    let parsed: Record<string, unknown> | null = null;
+    let sawImages = false;
+    if (images.length > 0) {
+      // A rate limit or an image the model can't fetch shouldn't cost the
+      // text polish, so fall back to it.
+      parsed = await askGroq(apiKey, meta, images).catch(() => null);
+      sawImages = parsed !== null;
+    }
+    parsed ??= await askGroq(apiKey, meta, []);
+    if (!parsed) return meta;
+
     const tags = Array.isArray(parsed.tags)
       ? parsed.tags
           .filter((t: unknown): t is string => typeof t === "string")
@@ -464,14 +509,15 @@ async function polishWithGroq(meta: Metadata): Promise<Metadata> {
           .filter((t: string) => t.length > 0 && t.length <= 24)
           .slice(0, 4)
       : [];
-    // The creator's own words win: only shorten titles too long for a card,
-    // and only summarise when the source had no description at all.
     const aiTitle = typeof parsed.title === "string" ? parsed.title.trim() : "";
     const aiSummary = typeof parsed.summary === "string" ? parsed.summary.trim() : "";
     return {
       ...meta,
+      // The creator's own title wins unless it's too long for a card.
       title: aiTitle && meta.title.length > 70 ? aiTitle : meta.title,
-      description: meta.description ?? (aiSummary || null),
+      // A summary written from the actual frames describes the video better
+      // than a channel's boilerplate; text-only, the creator's words win.
+      description: sawImages ? aiSummary || meta.description : meta.description ?? (aiSummary || null),
       tags,
     };
   } catch {
@@ -506,7 +552,7 @@ serve(async (req) => {
 
   let platform: Platform = "web";
   try {
-    const { url } = await req.json();
+    const { url, vision } = await req.json();
     if (typeof url !== "string" || url.trim().length === 0) return json({ error: "Missing url" }, 400);
 
     let parsed: URL;
@@ -520,7 +566,7 @@ serve(async (req) => {
     }
 
     platform = detectPlatform(parsed);
-    return json(await polishWithGroq(await resolve(parsed)));
+    return json(await polishWithGroq(await resolve(parsed), parsed, vision));
   } catch {
     // Enrichment failing must never block saving the raw URL client-side.
     return json(emptyMetadata(platform));
