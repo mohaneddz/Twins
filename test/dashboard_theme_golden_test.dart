@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:twins/data/mock/mock_repository.dart';
 import 'package:twins/features/home/home_dashboard_screen.dart';
+import 'package:twins/state/repository_provider.dart';
 import 'package:twins/theme/app_theme.dart';
 
 /// Renders the real dashboard under each theme. The screen used to pin itself
@@ -32,6 +34,7 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [repositoryProvider.overrideWithValue(MockTwinsRepository())],
           child: MaterialApp(
             theme: brightness == Brightness.dark ? AppTheme.dark : AppTheme.light,
             home: const HomeDashboardScreen(),
