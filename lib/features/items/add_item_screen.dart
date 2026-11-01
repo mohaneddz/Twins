@@ -65,10 +65,11 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
     super.initState();
     _selectedFolderId = widget.initialFolderId;
     if (widget.sharedText != null && widget.sharedText!.isNotEmpty) {
-      _urlController.text = widget.sharedText!;
+      final link = linkFromSharedText(widget.sharedText!);
+      _urlController.text = link;
       _mode = _AddMode.link;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _detectFromUrl(widget.sharedText!);
+        if (mounted) _detectFromUrl(link);
       });
     }
   }
@@ -161,7 +162,8 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
     if (clean != null && clean.isNotEmpty) setState(() => _selectedTags.add(clean));
   }
 
-  void _detectFromUrl(String url) {
+  void _detectFromUrl(String input) {
+    final url = canonicalLink(input);
     final detected = detectLink(url);
     setState(() => _detectedType = detected.type);
     _tryResolveMetadata(url);
@@ -507,7 +509,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
   }
 
   Future<void> _saveLink() async {
-    final url = _urlController.text.trim();
+    final url = canonicalLink(_urlController.text);
     if (url.isEmpty) {
       showTwinsToast(context, 'Paste a link first.', isError: true);
       return;
