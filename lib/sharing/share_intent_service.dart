@@ -16,6 +16,9 @@ class ShareIntentService {
   static final instance = ShareIntentService._();
 
   final _controller = StreamController<String>.broadcast();
+  // Mirrors the stored value so a share stashed during a cold start can't
+  // lose a race with the home screen reading it back.
+  String? _pending;
   StreamSubscription? _mediaSub;
   bool _started = false;
 
@@ -59,15 +62,18 @@ class ShareIntentService {
   }
 
   Future<void> stashPendingShare(String text) async {
+    _pending = text;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_pendingShareKey, text);
   }
 
   Future<String?> consumePendingShare() async {
+    final inMemory = _pending;
+    _pending = null;
     final prefs = await SharedPreferences.getInstance();
-    final value = prefs.getString(_pendingShareKey);
-    if (value != null) await prefs.remove(_pendingShareKey);
-    return value;
+    final stored = prefs.getString(_pendingShareKey);
+    if (stored != null) await prefs.remove(_pendingShareKey);
+    return inMemory ?? stored;
   }
 
   void dispose() {

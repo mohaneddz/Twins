@@ -50,10 +50,11 @@ class _TwinsAppState extends ConsumerState<TwinsApp> {
 
   Future<void> _handleIncomingShare(String text) async {
     final router = ref.read(routerProvider);
-    final profile = ref.read(authStateProvider).valueOrNull;
-    if (profile == null) {
-      // Not logged in yet - stash it and the home shell will pick it up
-      // via consumePendingShare() once auth completes.
+    final space = ref.read(currentSpaceProvider).valueOrNull;
+    if (space == null) {
+      // Cold start, or not logged in yet: a push now would sit on top of the
+      // splash and get dropped when the router redirects to /home, so the
+      // home shell picks it up via consumePendingShare() once it's showing.
       await ShareIntentService.instance.stashPendingShare(text);
       return;
     }

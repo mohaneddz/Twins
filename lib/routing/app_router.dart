@@ -22,14 +22,17 @@ import '../features/settings/settings_screen.dart';
 import '../splash_gate.dart';
 import '../state/auth_providers.dart';
 
+// Built once: auth/space changes reach the router through refreshListenable
+// and are read inside redirect. Watching them here instead would rebuild the
+// whole GoRouter on every change and drop anything pushed meanwhile, such as
+// the Add screen opened by a share that cold-started the app.
 final routerProvider = Provider<GoRouter>((ref) {
-  final authAsync = ref.watch(authStateProvider);
-  final spaceAsync = ref.watch(currentSpaceProvider);
-
   return GoRouter(
     initialLocation: '/',
     refreshListenable: _RiverpodRefreshStream(ref),
     redirect: (context, state) {
+      final authAsync = ref.read(authStateProvider);
+      final spaceAsync = ref.read(currentSpaceProvider);
       final loggingIn = state.matchedLocation == '/welcome';
 
       return authAsync.when(
