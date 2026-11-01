@@ -9,17 +9,19 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 - **Android Direct Share** — "We're Twins!" shows in the system share sheet's top row (verified on a Realme / Android 16; it climbed to first place after two shares).
 - **Cold-start shares fixed** — a share that launched the app used to land on home and lose the link (the router was rebuilt on every auth/space change). Now opens Add with the preview. Verified on the phone.
 - **Release builds had no INTERNET permission** — every release APK was offline. Fixed.
-- **Tests** — 28 Flutter tests; `supabase/tests/pairing_rls_test.sql` (12 checks) and `supabase/tests/twin_slots_test.sql` (8 checks), both rolled-back and safe on a live project.
+- **Home greeting is opt-in** — "Hey twins!" is hidden unless turned on in Settings → Greeting on home.
+- **Shared links need no editing** — the URL is pulled out of share text, and YouTube links (m., music., youtu.be, share params) are saved as clean www watch links, which also fixed m.youtube previews showing YouTube's generic tagline. Verified on the phone.
+- **Tests** — 33 Flutter tests; `supabase/tests/pairing_rls_test.sql` (12 checks) and `supabase/tests/twin_slots_test.sql` (8 checks), both rolled-back and safe on a live project.
 
 ## ❌ Blocked on something outside the code
 
 - **Push notifications** (L) — no Firebase/FCM/APNs code. Needs a Firebase project + APNs certs first. Live in-app updates use Realtime.
-- **iOS Share Extension** (S, Xcode GUI only) — no extension target in `ios/`; also untested: the whole iOS build.
+- **iOS** — out of scope: the app is Android-only for now (no share extension, never built for iOS).
 
 ## ⚠️ Still open
 
 - **Second twin's account** — slot 2 is still empty on the live project; create it from the other phone.
-- **`m.youtube.com` previews** — get YouTube's generic "Enjoy the videos and music you love" description instead of the video's (www links are fine).
+- **Redeploy `resolve-link`** — the function source now also canonicalizes YouTube links (for older app builds), but the deployed copy predates that; the app already sends clean links, so nothing is broken.
 - **Lint** (S) — ~19 `flutter analyze` infos, no errors.
 
 ## 👻 Known, deliberate non-features (not gaps)
@@ -30,7 +32,5 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 ## Next steps, in order
 
 1. Create twin 2 from the other phone.
-2. Fix the `m.youtube.com` description in `resolve-link`.
-3. Lint cleanup.
-4. iOS Share Extension, whenever iOS parity matters.
-5. Push notifications — Firebase project + APNs certs first.
+2. Lint cleanup.
+3. Push notifications — needs a Firebase project first (Android-only, so no APNs).
