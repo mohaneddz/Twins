@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../data/models/item.dart';
 import '../../state/auth_providers.dart' show currentSpaceProvider;
+import '../../state/activity_provider.dart';
 import '../../state/data_providers.dart';
 import '../../state/greeting_provider.dart';
 import '../../theme/colors.dart';
@@ -39,6 +40,8 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
       _toggle(item.id);
     }
   }
+
+  String _badgeLabel(int count) => count > 9 ? '9+' : '$count';
 
   void _toggle(String id) => setState(() => _selected.contains(id) ? _selected.remove(id) : _selected.add(id));
 
@@ -85,7 +88,12 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                           onPressed: () => context.push('/search'),
                         ),
                         IconButton(
-                          icon: Icon(PhosphorIconsBold.bell, color: palette.textPrimary),
+                          icon: Badge(
+                            isLabelVisible: ref.watch(unreadActivityCountProvider(space.id)) > 0,
+                            backgroundColor: TwinsColors.sakuraPink,
+                            label: Text(_badgeLabel(ref.watch(unreadActivityCountProvider(space.id)))),
+                            child: Icon(PhosphorIconsBold.bell, color: palette.textPrimary),
+                          ),
                           onPressed: () => context.push('/activity'),
                         ),
                       ],
