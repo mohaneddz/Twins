@@ -9,6 +9,7 @@ import '../../data/models/message.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/reaction.dart';
 import '../../state/auth_providers.dart';
+import '../../state/chat_naming_provider.dart';
 import '../../state/data_providers.dart';
 import '../../state/repository_provider.dart';
 import '../../theme/palette.dart';
@@ -73,7 +74,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       data: (messages) {
                         if (chat != null) _maybeAutoName(chat, messages);
                         if (messages.isEmpty) {
-                          return const EmptyState(emoji: '💬', title: 'Say hi to start the conversation');
+                          // Scrollable so the empty state doesn't overflow
+                          // into the composer when the keyboard is up.
+                          return LayoutBuilder(
+                            builder: (context, constraints) => SingleChildScrollView(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                                child: const Center(child: EmptyState(emoji: '💬', title: 'Say hi to start the conversation')),
+                              ),
+                            ),
+                          );
                         }
                         return membersAsync.when(
                           // Reversed so the list starts at the newest message
@@ -112,7 +122,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     TwinsSpacing.md,
                     TwinsSpacing.xs,
                     TwinsSpacing.md,
-                    TwinsSpacing.xs + MediaQuery.of(context).viewInsets.bottom,
+                    // The Scaffold already shrinks for the keyboard; adding the
+                    // inset here too counted it twice and squeezed the messages
+                    // under the composer.
+                    TwinsSpacing.xs,
                   ),
                   child: Row(
                     children: [
@@ -150,7 +163,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Future<void> _maybeAutoName(TwinsChat chat, List<TwinsMessage> messages) async {
-    if (!shouldAttemptAutoName(alreadyNaming: _naming, chatName: chat.name, messageCount: messages.length)) return;
+    final threshold = ref.read(chatAutoNameAfterProvider);
+    if (!shouldAttemptAutoName(alreadyNaming: _naming, chatName: chat.name, messageCount: messages.length, threshold: threshold)) {
+      return;
+    }
     _naming = true;
     final name = await suggestChatName(messages.take(10).map((m) => m.body).where((b) => b.isNotEmpty).toList());
     if (name != null && mounted) {
