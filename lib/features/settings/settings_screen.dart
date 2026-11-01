@@ -9,6 +9,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/models/folder.dart';
 import '../../data/models/item.dart';
+import '../../state/chat_naming_provider.dart';
 import '../../state/greeting_provider.dart';
 import '../../state/repository_provider.dart';
 import '../../state/theme_provider.dart';
@@ -57,6 +58,26 @@ class SettingsScreen extends ConsumerWidget {
               trailing: Switch(
                 value: ref.watch(showGreetingProvider),
                 onChanged: (show) => ref.read(showGreetingProvider.notifier).set(show),
+              ),
+            ),
+          ]),
+          const SizedBox(height: TwinsSpacing.lg),
+          const _SectionLabel('Chats'),
+          _SettingsGroup(children: [
+            _SettingsTile(
+              icon: PhosphorIconsRegular.sparkle,
+              label: 'Name new chats after',
+              trailing: DropdownButton<int>(
+                value: ref.watch(chatAutoNameAfterProvider),
+                underline: const SizedBox.shrink(),
+                items: const [
+                  DropdownMenuItem(value: 1, child: Text('1st message')),
+                  DropdownMenuItem(value: 2, child: Text('2nd message')),
+                  DropdownMenuItem(value: 3, child: Text('3rd message')),
+                ],
+                onChanged: (n) {
+                  if (n != null) ref.read(chatAutoNameAfterProvider.notifier).set(n);
+                },
               ),
             ),
           ]),

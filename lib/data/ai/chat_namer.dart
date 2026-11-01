@@ -1,19 +1,17 @@
 import '../supabase/supabase_client_provider.dart';
 
-/// Messages a chat needs before auto-naming is worth attempting.
-const autoNameThreshold = 3;
-
 /// Whether [ChatScreen] should attempt to auto-name a chat right now. Fires
-/// once per unnamed chat, the first time it reaches [autoNameThreshold]
-/// messages - renaming after that is manual only (`chatName` stops being
+/// once per unnamed chat, the first time it reaches [threshold] messages
+/// (Settings → Chats) - renaming after that is manual only (`chatName` stops being
 /// null), so this never re-fires or fights a name the twins picked
 /// themselves.
 bool shouldAttemptAutoName({
   required bool alreadyNaming,
   required String? chatName,
   required int messageCount,
+  required int threshold,
 }) {
-  return !alreadyNaming && chatName == null && messageCount >= autoNameThreshold;
+  return !alreadyNaming && chatName == null && messageCount >= threshold;
 }
 
 /// Names a chat thread from its first few messages, run server-side via the
