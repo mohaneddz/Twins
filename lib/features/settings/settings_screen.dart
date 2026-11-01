@@ -9,6 +9,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/models/folder.dart';
 import '../../data/models/item.dart';
+import '../../state/greeting_provider.dart';
 import '../../state/repository_provider.dart';
 import '../../state/theme_provider.dart';
 import '../../theme/colors.dart';
@@ -48,6 +49,14 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: (mode) {
                   if (mode != null) ref.read(themeModeProvider.notifier).setMode(mode);
                 },
+              ),
+            ),
+            _SettingsTile(
+              icon: PhosphorIconsRegular.handWaving,
+              label: 'Greeting on home',
+              trailing: Switch(
+                value: ref.watch(showGreetingProvider),
+                onChanged: (show) => ref.read(showGreetingProvider.notifier).set(show),
               ),
             ),
           ]),

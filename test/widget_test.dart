@@ -20,7 +20,8 @@ void main() {
 
     // The mock repository starts pre-authenticated with seeded data, so the
     // whole shell renders without a Supabase project.
-    expect(find.text('Hey twins! 👋'), findsOneWidget);
+    // The greeting is opt-in (Settings → Greeting on home).
+    expect(find.text('Hey twins! 👋'), findsNothing);
     expect(find.text('Funny Reels 😂'), findsOneWidget);
   });
 }

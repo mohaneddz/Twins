@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../state/auth_providers.dart' show currentSpaceProvider;
 import '../../state/data_providers.dart';
+import '../../state/greeting_provider.dart';
 import '../../theme/colors.dart';
 import '../../theme/palette.dart';
 import '../../theme/spacing.dart';
@@ -50,9 +51,11 @@ class HomeDashboardScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: TwinsSpacing.md),
-                  Text('Hey twins! 👋', style: TwinsTypography.heading(palette.textPrimary, size: 22)),
-                  Text('What are we saving today?', style: TwinsTypography.body(palette.textSecondary)),
+                  if (ref.watch(showGreetingProvider)) ...[
+                    const SizedBox(height: TwinsSpacing.md),
+                    Text('Hey twins! 👋', style: TwinsTypography.heading(palette.textPrimary, size: 22)),
+                    Text('What are we saving today?', style: TwinsTypography.body(palette.textSecondary)),
+                  ],
                   const SizedBox(height: TwinsSpacing.xl),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
