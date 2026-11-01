@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../state/auth_providers.dart';
-import '../../state/repository_provider.dart';
 import '../../theme/palette.dart';
 import '../../theme/colors.dart';
 import '../../theme/radius.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
-import '../../widgets/confirm_dialog.dart';
-import '../../widgets/toast.dart';
+import 'reset_twin_password_dialog.dart';
 
 class PrivacyScreen extends ConsumerWidget {
   const PrivacyScreen({super.key});
@@ -62,32 +59,14 @@ class PrivacyScreen extends ConsumerWidget {
               borderRadius: TwinsRadius.lgRadius,
             ),
             child: ListTile(
-              leading: const Icon(Icons.logout, color: TwinsColors.danger),
-              title: const Text('Leave this space', style: TextStyle(color: TwinsColors.danger)),
-              subtitle: const Text('You\'ll need a new invite code to rejoin'),
-              onTap: () => _leaveSpace(context, ref),
+              leading: Icon(Icons.key_outlined, color: context.twins.textPrimary),
+              title: const Text("Reset a twin's password"),
+              subtitle: const Text('There are no recovery emails - set a new one here'),
+              onTap: () => showResetTwinPasswordDialog(context, ref),
             ),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _leaveSpace(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showConfirmDialog(
-      context,
-      title: 'Leave this Twins space?',
-      message: "You'll lose access to everything in it until you rejoin with a new invite code.",
-      confirmLabel: 'Leave',
-    );
-    if (!confirmed) return;
-    final space = await ref.read(repositoryProvider).currentSpace();
-    if (space == null) return;
-    await ref.read(repositoryProvider).leaveSpace(space.id);
-    ref.invalidate(currentSpaceProvider);
-    if (context.mounted) {
-      showTwinsToast(context, 'You left the space.');
-      context.go('/onboarding');
-    }
   }
 }

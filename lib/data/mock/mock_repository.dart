@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -14,6 +13,7 @@ import '../models/profile.dart';
 import '../models/reaction.dart';
 import '../models/space.dart';
 import '../models/tag.dart';
+import '../models/twin_slot.dart';
 import '../models/upload_result.dart';
 import '../models/user_settings.dart';
 import '../repositories/twins_repository.dart';
@@ -65,12 +65,27 @@ class MockTwinsRepository implements TwinsRepository {
   @override
   Profile? get currentProfile => _authed;
 
+
   @override
-  Future<Profile> signUp({required String email, required String password, required String displayName}) async {
+  Future<List<TwinSlot>> twinSlots() async {
     await _delay();
-    _authed = MockSeed.me.copyWith(displayName: displayName);
+    return [
+      for (final (i, p) in [MockSeed.me, MockSeed.twin].indexed)
+        TwinSlot(slot: i + 1, displayName: p.displayName, avatarUrl: p.avatarUrl, loginEmail: 'twin${i + 1}@twins.local'),
+    ];
+  }
+
+  @override
+  Future<Profile> claimTwinSlot({required int slot, required String displayName, required String password}) async {
+    await _delay();
+    _authed = (slot == 1 ? MockSeed.me : MockSeed.twin).copyWith(displayName: displayName);
     _authController.add(_authed);
     return _authed!;
+  }
+
+  @override
+  Future<void> resetTwinPassword({required int slot, required String password}) async {
+    await _delay();
   }
 
   @override
@@ -88,10 +103,6 @@ class MockTwinsRepository implements TwinsRepository {
     _authController.add(null);
   }
 
-  @override
-  Future<void> resetPassword(String email) async {
-    await _delay();
-  }
 
   @override
   Future<void> updatePassword(String newPassword) async {
@@ -120,38 +131,9 @@ class MockTwinsRepository implements TwinsRepository {
     return [MockSeed.me, MockSeed.twin];
   }
 
-  @override
-  Future<TwinsSpace> createSpace(String name) async {
-    await _delay();
-    return TwinsSpace(id: _uuid.v4(), name: name, createdBy: MockSeed.meId, createdAt: DateTime.now());
-  }
 
-  @override
-  Future<SpaceInvite> createInvite(String spaceId) async {
-    await _delay();
-    final code = _randomCode();
-    return SpaceInvite(
-      id: _uuid.v4(),
-      spaceId: spaceId,
-      code: code,
-      createdBy: MockSeed.meId,
-      expiresAt: DateTime.now().add(const Duration(days: 7)),
-    );
-  }
 
-  @override
-  Future<TwinsSpace> joinSpaceWithCode(String code) async {
-    await _delay();
-    return MockSeed.space;
-  }
 
-  @override
-  Future<void> leaveSpace(String spaceId) async {
-    // Single-device mock mode has only one hardcoded seeded space, so there's
-    // nothing meaningful to leave - this is a no-op here and only does
-    // something real against Supabase.
-    await _delay();
-  }
 
   // ---- Folders ----
   @override
@@ -750,12 +732,6 @@ class MockTwinsRepository implements TwinsRepository {
   }
 
   Future<void> _delay({int ms = 250}) => Future.delayed(Duration(milliseconds: ms));
-
-  String _randomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final rand = Random();
-    return List.generate(6, (_) => chars[rand.nextInt(chars.length)]).join();
-  }
 }
 
 extension _FirstWhereOrNull<T> on List<T> {

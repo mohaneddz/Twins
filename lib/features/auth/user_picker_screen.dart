@@ -1,9 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../data/models/twin_slot.dart';
 import '../../state/repository_provider.dart';
 import '../../theme/colors.dart';
 import '../../theme/palette.dart';
@@ -14,22 +16,8 @@ import '../../widgets/doodles.dart';
 import '../../widgets/twins_input.dart';
 import '../../widgets/twins_logo.dart';
 
-class _AccountSlot {
-  final String email;
-  final String prefsKey;
-  final String defaultLabel;
-
-  const _AccountSlot({required this.email, required this.prefsKey, required this.defaultLabel});
-}
-
-/// Fixed two-person membership: this app only ever has these two accounts.
-/// The display label next to each is purely local (stored on-device) so
-/// either person can rename their own slot without touching the account.
-const _slots = [
-  _AccountSlot(email: 'mohaned@twins.app', prefsKey: 'twins_slot1_label', defaultLabel: 'User 1'),
-  _AccountSlot(email: 'rania@twins.app', prefsKey: 'twins_slot2_label', defaultLabel: 'User 2'),
-];
-
+/// "Who's this?": the project's two account slots. A taken slot logs in with
+/// its password; an empty one is created right here with a name and password.
 class UserPickerScreen extends ConsumerStatefulWidget {
   const UserPickerScreen({super.key});
 
@@ -38,84 +26,100 @@ class UserPickerScreen extends ConsumerStatefulWidget {
 }
 
 class _UserPickerScreenState extends ConsumerState<UserPickerScreen> {
+  final _name = TextEditingController();
   final _password = TextEditingController();
-  List<String> _labels = _slots.map((s) => s.defaultLabel).toList();
+  final _confirm = TextEditingController();
+  late Future<List<TwinSlot>> _slots = ref.read(repositoryProvider).twinSlots();
   int? _selected;
   bool _loading = false;
   String? _error;
 
   @override
-  void initState() {
-    super.initState();
-    _loadLabels();
-  }
-
-  @override
   void dispose() {
+    _name.dispose();
     _password.dispose();
+    _confirm.dispose();
     super.dispose();
   }
 
-  Future<void> _loadLabels() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
+  void _select(int slot) {
     setState(() {
-      _labels = [for (final slot in _slots) prefs.getString(slot.prefsKey) ?? slot.defaultLabel];
-    });
-  }
-
-  Future<void> _rename(int index) async {
-    final controller = TextEditingController(text: _labels[index]);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rename'),
-        content: TextField(controller: controller, autofocus: true),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: const Text('Save')),
-        ],
-      ),
-    );
-    if (result == null || result.isEmpty) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_slots[index].prefsKey, result);
-    if (!mounted) return;
-    setState(() => _labels[index] = result);
-  }
-
-  void _select(int index) {
-    setState(() {
-      _selected = index;
+      _selected = slot;
       _error = null;
+      _name.clear();
       _password.clear();
+      _confirm.clear();
     });
   }
 
-  Future<void> _submit() async {
-    final index = _selected;
-    if (index == null) return;
+  Future<void> _logIn(TwinSlot slot) async {
     if (_password.text.isEmpty) {
       setState(() => _error = 'Enter the password.');
       return;
     }
+    await _submit(() => ref.read(repositoryProvider).logIn(email: slot.loginEmail, password: _password.text),
+        failure: "Wrong password for ${slot.displayName}.");
+  }
+
+  Future<void> _create(int slot) async {
+    if (_name.text.trim().isEmpty) {
+      setState(() => _error = "What's your name?");
+      return;
+    }
+    if (_password.text.length < 6) {
+      setState(() => _error = 'Use at least 6 characters for the password.');
+      return;
+    }
+    if (_password.text != _confirm.text) {
+      setState(() => _error = "The passwords don't match.");
+      return;
+    }
+    await _submit(
+      () => ref.read(repositoryProvider).claimTwinSlot(slot: slot, displayName: _name.text.trim(), password: _password.text),
+      failure: "Couldn't create the account.",
+    );
+  }
+
+  Future<void> _submit(Future<void> Function() action, {required String failure}) async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      await ref.read(repositoryProvider).logIn(email: _slots[index].email, password: _password.text);
+      await action();
       if (mounted) context.go('/home');
+    } on PostgrestException catch (e) {
+      // Raised by claim_twin_slot with a message meant for people, e.g. the
+      // other phone created this twin a moment ago.
+      if (mounted) {
+        setState(() {
+          _error = e.message;
+          _slots = ref.read(repositoryProvider).twinSlots();
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() => _error = "Couldn't log in. Check the password.");
+      if (mounted) setState(() => _error = failure);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  void _forgotPassword(TwinSlot slot) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Forgot your password?'),
+        content: Text(
+          "There's no recovery email in ¡Twins!. Ask your twin to open Settings → Privacy → "
+          "Reset a twin's password and set a new one for ${slot.displayName}.",
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Got it'))],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final selected = _selected;
     return Scaffold(
       body: Stack(
         children: [
@@ -123,44 +127,24 @@ class _UserPickerScreenState extends ConsumerState<UserPickerScreen> {
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: TwinsSpacing.xl),
-              child: Column(
-                children: [
-                  const SizedBox(height: TwinsSpacing.xxl),
-                  const TwinsLogo(size: 48),
-                  const SizedBox(height: TwinsSpacing.sm),
-                  Text("Who's this? 💚", style: TwinsTypography.body(TwinsColors.mikuGreen, size: 16)),
-                  const SizedBox(height: TwinsSpacing.xxl),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (var i = 0; i < _slots.length; i++) ...[
-                        if (i > 0) const SizedBox(width: TwinsSpacing.xl),
-                        _ProfileCard(
-                          label: _labels[i],
-                          selected: selected == i,
-                          onTap: () => _select(i),
-                          onRename: () => _rename(i),
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (selected != null) ...[
+              child: FutureBuilder<List<TwinSlot>>(
+                future: _slots,
+                builder: (context, snapshot) => Column(
+                  children: [
                     const SizedBox(height: TwinsSpacing.xxl),
-                    TwinsInput(hint: 'Password for ${_labels[selected]}', controller: _password, obscure: true),
-                    if (_error != null) ...[
-                      const SizedBox(height: TwinsSpacing.xs),
-                      Text(_error!, style: const TextStyle(color: TwinsColors.danger, fontSize: 13)),
-                    ],
-                    const SizedBox(height: TwinsSpacing.md),
-                    PrimaryButton(label: 'Log in', onPressed: _submit, loading: _loading),
-                    const SizedBox(height: TwinsSpacing.xs),
-                    TextButton(
-                      onPressed: () => context.push('/forgot-password'),
-                      child: const Text('Forgot password?'),
-                    ),
+                    const TwinsLogo(size: 48),
+                    const SizedBox(height: TwinsSpacing.sm),
+                    Text("Who's this? 💚", style: TwinsTypography.body(TwinsColors.mikuGreen, size: 16)),
+                    const SizedBox(height: TwinsSpacing.xxl),
+                    if (snapshot.hasError)
+                      _loadError()
+                    else if (!snapshot.hasData)
+                      const Padding(padding: EdgeInsets.all(TwinsSpacing.xl), child: CircularProgressIndicator())
+                    else
+                      ..._picker(snapshot.data!),
+                    const SizedBox(height: TwinsSpacing.xl),
                   ],
-                  const SizedBox(height: TwinsSpacing.xl),
-                ],
+                ),
               ),
             ),
           ),
@@ -168,19 +152,82 @@ class _UserPickerScreenState extends ConsumerState<UserPickerScreen> {
       ),
     );
   }
+
+  Widget _loadError() => Column(
+        children: [
+          Text("Couldn't reach your project.", style: TwinsTypography.body(context.twins.textSecondary)),
+          TextButton(
+            onPressed: () => setState(() => _slots = ref.read(repositoryProvider).twinSlots()),
+            child: const Text('Try again'),
+          ),
+        ],
+      );
+
+  List<Widget> _picker(List<TwinSlot> taken) {
+    TwinSlot? find(int slot) => taken.where((s) => s.slot == slot).firstOrNull;
+    final selected = _selected;
+    final selectedTwin = selected == null ? null : find(selected);
+    return [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (final slot in [1, 2]) ...[
+            if (slot == 2) const SizedBox(width: TwinsSpacing.xl),
+            _ProfileCard(twin: find(slot), slot: slot, selected: selected == slot, onTap: () => _select(slot)),
+          ],
+        ],
+      ),
+      if (taken.isEmpty) ...[
+        const SizedBox(height: TwinsSpacing.lg),
+        Text(
+          'Brand new space! Tap a bubble to create your account - your twin takes the other one on their phone.',
+          textAlign: TextAlign.center,
+          style: TwinsTypography.body(context.twins.textSecondary, size: 13),
+        ),
+      ],
+      if (selected != null) ...[
+        const SizedBox(height: TwinsSpacing.xxl),
+        if (selectedTwin != null) ...[
+          TwinsInput(hint: 'Password for ${selectedTwin.displayName}', controller: _password, obscure: true),
+        ] else ...[
+          TwinsInput(hint: 'Your name', controller: _name),
+          const SizedBox(height: TwinsSpacing.sm),
+          TwinsInput(hint: 'Choose a password', controller: _password, obscure: true),
+          const SizedBox(height: TwinsSpacing.sm),
+          TwinsInput(hint: 'Password again', controller: _confirm, obscure: true),
+        ],
+        if (_error != null) ...[
+          const SizedBox(height: TwinsSpacing.xs),
+          Text(_error!, style: const TextStyle(color: TwinsColors.danger, fontSize: 13)),
+        ],
+        const SizedBox(height: TwinsSpacing.md),
+        PrimaryButton(
+          label: selectedTwin != null ? 'Log in' : 'Create account',
+          onPressed: selectedTwin != null ? () => _logIn(selectedTwin) : () => _create(selected),
+          loading: _loading,
+        ),
+        if (selectedTwin != null) ...[
+          const SizedBox(height: TwinsSpacing.xs),
+          TextButton(onPressed: () => _forgotPassword(selectedTwin), child: const Text('Forgot password?')),
+        ],
+      ],
+    ];
+  }
 }
 
 class _ProfileCard extends StatelessWidget {
-  final String label;
+  final TwinSlot? twin;
+  final int slot;
   final bool selected;
   final VoidCallback onTap;
-  final VoidCallback onRename;
 
-  const _ProfileCard({required this.label, required this.selected, required this.onTap, required this.onRename});
+  const _ProfileCard({required this.twin, required this.slot, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final initial = label.trim().isEmpty ? '?' : label.trim()[0].toUpperCase();
+    final twin = this.twin;
+    final avatarUrl = twin?.avatarUrl;
+    final name = twin?.displayName.trim() ?? '';
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -191,25 +238,24 @@ class _ProfileCard extends StatelessWidget {
             height: 88,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: const LinearGradient(colors: [TwinsColors.mikuLight, TwinsColors.vibrantBlue]),
+              gradient: twin == null ? null : const LinearGradient(colors: [TwinsColors.mikuLight, TwinsColors.vibrantBlue]),
+              color: twin == null ? context.twins.textSecondary.withValues(alpha: 0.12) : null,
               border: Border.all(color: selected ? TwinsColors.mikuGreen : Colors.transparent, width: 3),
+              image: avatarUrl == null
+                  ? null
+                  : DecorationImage(image: CachedNetworkImageProvider(avatarUrl), fit: BoxFit.cover),
             ),
             alignment: Alignment.center,
-            child: Text(initial, style: TwinsTypography.heading(TwinsColors.white, size: 32)),
+            child: twin == null
+                ? Icon(PhosphorIconsRegular.plus, size: 30, color: context.twins.textSecondary)
+                : avatarUrl == null
+                    ? Text(name.isEmpty ? '?' : name[0].toUpperCase(), style: TwinsTypography.heading(TwinsColors.white, size: 32))
+                    : null,
           ),
           const SizedBox(height: TwinsSpacing.xs),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(label, style: TwinsTypography.label(context.twins.textPrimary)),
-              GestureDetector(
-                onTap: onRename,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: Icon(PhosphorIconsRegular.pencilSimple, size: 14, color: context.twins.textSecondary),
-                ),
-              ),
-            ],
+          Text(
+            twin == null ? 'Twin $slot' : name,
+            style: TwinsTypography.label(twin == null ? context.twins.textSecondary : context.twins.textPrimary),
           ),
         ],
       ),

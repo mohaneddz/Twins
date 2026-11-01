@@ -16,6 +16,7 @@ import '../models/profile.dart';
 import '../models/reaction.dart';
 import '../models/space.dart';
 import '../models/tag.dart';
+import '../models/twin_slot.dart';
 import '../models/upload_result.dart';
 import '../models/user_settings.dart';
 import '../repositories/twins_repository.dart';
@@ -76,20 +77,26 @@ class SupabaseTwinsRepository implements TwinsRepository {
   @override
   Profile? get currentProfile => _cachedProfile;
 
+
   @override
-  Future<Profile> signUp({required String email, required String password, required String displayName}) async {
-    final res = await supa.auth.signUp(email: email, password: password);
-    final user = res.user;
-    if (user == null) throw Exception('Sign up failed');
-    final inserted = await supa
-        .from('profiles')
-        .upsert({'id': user.id, 'display_name': displayName, 'username': email.split('@').first})
-        .select()
-        .single();
-    final profile = Profile.fromJson(inserted);
-    _cachedProfile = profile;
-    return profile;
+  Future<List<TwinSlot>> twinSlots() async {
+    final rows = await supa.rpc('twin_slots') as List;
+    return rows.map((r) => TwinSlot.fromJson(r as Map<String, dynamic>)).toList();
   }
+
+  @override
+  Future<Profile> claimTwinSlot({required int slot, required String displayName, required String password}) async {
+    final email = await supa.rpc('claim_twin_slot', params: {
+      'p_slot': slot,
+      'p_display_name': displayName,
+      'p_password': password,
+    }) as String;
+    return logIn(email: email, password: password);
+  }
+
+  @override
+  Future<void> resetTwinPassword({required int slot, required String password}) =>
+      supa.rpc('reset_twin_password', params: {'p_slot': slot, 'p_password': password});
 
   @override
   Future<Profile> logIn({required String email, required String password}) async {
@@ -104,8 +111,6 @@ class SupabaseTwinsRepository implements TwinsRepository {
   @override
   Future<void> logOut() => supa.auth.signOut();
 
-  @override
-  Future<void> resetPassword(String email) => supa.auth.resetPasswordForEmail(email);
 
   @override
   Future<void> updatePassword(String newPassword) async {
@@ -149,39 +154,9 @@ class SupabaseTwinsRepository implements TwinsRepository {
     return rows.map((r) => Profile.fromJson((r as Map)['profiles'] as Map<String, dynamic>)).toList();
   }
 
-  @override
-  Future<TwinsSpace> createSpace(String name) async {
-    // Runs as a security-definer RPC (see migration 0012) - a plain
-    // client-side insert here gets rejected by RLS on this project even
-    // when the check is provably true, a bug isolated to INSERT specifically
-    // (the identical check on UPDATE works fine). The RPC enforces the same
-    // invariant server-side and also seeds the starter tag catalog.
-    final row = await supa.rpc('create_space', params: {'p_name': name}) as Map<String, dynamic>;
-    return TwinsSpace.fromJson(row);
-  }
 
-  @override
-  Future<SpaceInvite> createInvite(String spaceId) async {
-    // Same RLS-on-INSERT workaround as createSpace above.
-    final row = await supa.rpc('create_invite', params: {'p_space_id': spaceId}) as Map<String, dynamic>;
-    return SpaceInvite.fromJson(row);
-  }
 
-  @override
-  Future<TwinsSpace> joinSpaceWithCode(String code) async {
-    // Calls the secure `join_space_with_code` RPC (see migrations) which
-    // validates the invite, enforces the two-member cap, and inserts the
-    // membership row atomically server-side.
-    final spaceId = await supa.rpc('join_space_with_code', params: {'invite_code': code}) as String;
-    final row = await supa.from('spaces').select().eq('id', spaceId).single();
-    return TwinsSpace.fromJson(row);
-  }
 
-  @override
-  Future<void> leaveSpace(String spaceId) async {
-    final userId = supa.auth.currentUser!.id;
-    await supa.from('space_members').delete().eq('space_id', spaceId).eq('user_id', userId);
-  }
 
   // ---- Folders ----
   @override

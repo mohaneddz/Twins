@@ -8,6 +8,7 @@ import '../models/profile.dart';
 import '../models/reaction.dart';
 import '../models/space.dart';
 import '../models/tag.dart';
+import '../models/twin_slot.dart';
 import '../models/upload_result.dart';
 import '../models/user_settings.dart';
 
@@ -18,22 +19,26 @@ abstract class TwinsRepository {
   // ---- Auth ----
   Stream<Profile?> authState();
   Profile? get currentProfile;
-  Future<Profile> signUp({required String email, required String password, required String displayName});
+  /// Both account slots of this project, readable before anyone logs in.
+  Future<List<TwinSlot>> twinSlots();
+
+  /// Creates the account for an empty [slot] and signs in as it. The first
+  /// twin's claim creates the space; the second joins it.
+  Future<Profile> claimTwinSlot({required int slot, required String displayName, required String password});
   Future<Profile> logIn({required String email, required String password});
   Future<void> logOut();
-  Future<void> resetPassword(String email);
+
+  /// There's no recovery email: either twin can set a new password for the
+  /// other one (or themselves) while signed in.
+  Future<void> resetTwinPassword({required int slot, required String password});
 
   /// Changes the signed-in user's own password (no reset email needed).
   Future<void> updatePassword(String newPassword);
   Future<Profile> updateProfile({String? displayName, String? username, String? bio, String? avatarUrl});
 
-  // ---- Space / pairing ----
+  // ---- Space ----
   Future<TwinsSpace?> currentSpace();
   Future<List<Profile>> spaceMembers(String spaceId);
-  Future<TwinsSpace> createSpace(String name);
-  Future<SpaceInvite> createInvite(String spaceId);
-  Future<TwinsSpace> joinSpaceWithCode(String code);
-  Future<void> leaveSpace(String spaceId);
 
   // ---- Folders ----
   Future<TwinsFolder?> getFolder(String folderId);

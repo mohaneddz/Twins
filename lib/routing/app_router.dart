@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/user_picker_screen.dart';
 import '../features/chat/chat_screen.dart';
 import '../features/folders/all_folders_screen.dart';
@@ -11,14 +10,10 @@ import '../features/home/home_shell.dart';
 import '../features/items/add_item_screen.dart';
 import '../features/items/item_detail_screen.dart';
 import '../features/folders/folder_view_screen.dart';
-import '../features/onboarding/create_space_screen.dart';
-import '../features/onboarding/join_space_screen.dart';
-import '../features/onboarding/pairing_choice_screen.dart';
 import '../features/profile/edit_profile_screen.dart';
 import '../features/search/search_screen.dart';
 import '../features/settings/change_password_screen.dart';
 import '../features/settings/help_center_screen.dart';
-import '../features/settings/invite_partner_screen.dart';
 import '../features/settings/manage_folders_screen.dart';
 import '../features/settings/manage_tags_screen.dart';
 import '../features/settings/notifications_settings_screen.dart';
@@ -35,8 +30,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: _RiverpodRefreshStream(ref),
     redirect: (context, state) {
-      final loggingIn = state.matchedLocation == '/forgot-password' || state.matchedLocation == '/welcome';
-      final onboarding = state.matchedLocation.startsWith('/onboarding');
+      final loggingIn = state.matchedLocation == '/welcome';
 
       return authAsync.when(
         data: (profile) {
@@ -45,15 +39,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             // (including the initial splash at '/') goes to welcome.
             return loggingIn ? null : '/welcome';
           }
-          // Logged in but not paired with anyone yet: confine to the
-          // pairing flow instead of leaving home stuck on a permanent
-          // loading spinner for a space that doesn't exist.
+          // Claiming a slot always creates or joins the project's space, so
+          // a signed-in account without one can only be a leftover from
+          // before slots existed - keep it on the picker rather than on a
+          // home screen that would spin forever.
           if (!spaceAsync.isLoading && spaceAsync.valueOrNull == null) {
-            return onboarding ? null : '/onboarding';
+            return loggingIn ? null : '/welcome';
           }
-          // Logged in and paired: leave the splash/auth/onboarding screens
-          // for home.
-          if (state.matchedLocation == '/' || loggingIn || onboarding) {
+          // Logged in and paired: leave the splash/picker for home.
+          if (state.matchedLocation == '/' || loggingIn) {
             return '/home';
           }
           return null;
@@ -65,13 +59,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashGate()),
       GoRoute(path: '/welcome', builder: (context, state) => const UserPickerScreen()),
-      GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
-      GoRoute(
-        path: '/onboarding',
-        builder: (context, state) => const PairingChoiceScreen(),
-      ),
-      GoRoute(path: '/onboarding/create', builder: (context, state) => const CreateSpaceScreen()),
-      GoRoute(path: '/onboarding/join', builder: (context, state) => const JoinSpaceScreen()),
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeShell(),
@@ -106,7 +93,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/settings/edit-profile', builder: (context, state) => const EditProfileScreen()),
       GoRoute(path: '/settings/manage-folders', builder: (context, state) => const ManageFoldersScreen()),
       GoRoute(path: '/settings/manage-tags', builder: (context, state) => const ManageTagsScreen()),
-      GoRoute(path: '/settings/invite', builder: (context, state) => const InvitePartnerScreen()),
       GoRoute(path: '/settings/privacy', builder: (context, state) => const PrivacyScreen()),
       GoRoute(path: '/settings/change-password', builder: (context, state) => const ChangePasswordScreen()),
       GoRoute(path: '/settings/notifications', builder: (context, state) => const NotificationsSettingsScreen()),

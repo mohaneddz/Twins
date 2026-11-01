@@ -56,7 +56,6 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsGroup(children: [
             _SettingsTile(icon: PhosphorIconsRegular.folders, label: 'Manage folders', onTap: () => context.push('/settings/manage-folders')),
             _SettingsTile(icon: PhosphorIconsRegular.tag, label: 'Manage tags', onTap: () => context.push('/settings/manage-tags')),
-            _SettingsTile(icon: PhosphorIconsRegular.userPlus, label: 'Invite / re-invite partner', onTap: () => context.push('/settings/invite')),
             _SettingsTile(
               icon: PhosphorIconsRegular.export,
               label: 'Export our space',
