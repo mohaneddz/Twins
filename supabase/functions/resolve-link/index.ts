@@ -272,9 +272,13 @@ async function resolveYouTube(url: URL): Promise<Metadata> {
   meta.site_name = "YouTube";
   meta.favicon_url = "https://www.youtube.com/favicon.ico";
 
+  // m.youtube.com serves no description (only YouTube's generic tagline), so
+  // always read the desktop watch page for the video.
+  const id = youtubeId(url);
+  const pageUrl = id ? `https://www.youtube.com/watch?v=${id}` : url.toString();
   const [oembed, page] = await Promise.all([
-    fetchJson(`https://www.youtube.com/oembed?url=${encodeURIComponent(url.toString())}&format=json`),
-    fetchPage(url.toString(), BROWSER_UA),
+    fetchJson(`https://www.youtube.com/oembed?url=${encodeURIComponent(pageUrl)}&format=json`),
+    fetchPage(pageUrl, BROWSER_UA),
   ]);
 
   meta.title = clean(oembed?.title) ?? (page ? metaOf(page, "og:title", "title") : null);
@@ -298,7 +302,6 @@ async function resolveYouTube(url: URL): Promise<Metadata> {
 
   // og:image is the maxres frame when one exists; oEmbed only ever offers the
   // letterboxed 480x360 "hqdefault".
-  const id = youtubeId(url);
   meta.thumbnail_url = (page ? metaOf(page, "og:image") : null) ??
     (id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : clean(oembed?.thumbnail_url));
   return meta;
