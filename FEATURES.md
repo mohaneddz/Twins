@@ -19,7 +19,9 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 - **Chat**: keyboard no longer squeezes messages under the composer; chats get their first name after N messages (default 1) and a fresh one every Y messages (default 20, or Never) from the latest messages — typed names are never replaced (`0016`); the list shows each chat's latest message.
 - **AI vision** (Settings → AI looks at) — Groq's `qwen/qwen3.8-27b` sees up to 3 images (YouTube start/middle/end frames and/or the thumbnail) and writes a description of what's actually in the video; falls back to the text model on failure. Settings → Update server functions redeploys the edge functions from the phone.
 - **Schema upgrades on app update** — setup stores the schema version it confirmed; an update needing a newer one reconnects automatically and only asks for the connection string if the DB is behind.
-- **Tests** — 34 Flutter tests; `supabase/tests/pairing_rls_test.sql` (12 checks) and `supabase/tests/twin_slots_test.sql` (8 checks), both rolled-back and safe on a live project.
+- **Invite link** — Settings → Invite your twin (or the profile's twin card) shares `twins://join?u=…&k=…`; opening it on a fresh install, or pasting it on the setup screen, connects without a second setup. Not yet tried on a device.
+- **Profile** shows your own name, @username and bio plus a card with your twin's (invite button while their slot is empty). Selection borders draw above thumbnails. Not yet tried on a device.
+- **Tests** — 37 Flutter tests; `supabase/tests/pairing_rls_test.sql` (12 checks) and `supabase/tests/twin_slots_test.sql` (8 checks), both rolled-back and safe on a live project.
 
 ## ❌ Blocked on something outside the code
 
