@@ -151,7 +151,8 @@ Endpoint _endpointFromConnectionString(String connectionString) {
 /// Deploys the bundled edge functions and the Groq secret through the
 /// Supabase Management API, which needs a personal access token
 /// (supabase.com/dashboard/account/tokens). Neither value is stored.
-Future<void> deployEdgeFunctions({
+/// Returns each function's new version number, as Supabase reports it.
+Future<Map<String, int?>> deployEdgeFunctions({
   required String projectUrl,
   required String accessToken,
   String? groqApiKey,
@@ -161,6 +162,7 @@ Future<void> deployEdgeFunctions({
   final base = 'https://api.supabase.com/v1/projects/$ref';
   final auth = {'Authorization': 'Bearer ${accessToken.trim()}'};
 
+  final versions = <String, int?>{};
   for (final name in edgeFunctions) {
     onStep?.call(name);
     final source = await rootBundle.loadString('supabase/functions/$name/index.ts');
@@ -175,6 +177,8 @@ Future<void> deployEdgeFunctions({
     if (response.statusCode >= 300) {
       throw SetupException('Deploying $name failed (${response.statusCode}): ${response.body}');
     }
+    final body = jsonDecode(response.body);
+    versions[name] = body is Map ? (body['version'] as num?)?.toInt() : null;
   }
 
   final groq = groqApiKey?.trim() ?? '';
@@ -191,4 +195,5 @@ Future<void> deployEdgeFunctions({
       throw SetupException('Saving the Groq key failed (${response.statusCode}): ${response.body}');
     }
   }
+  return versions;
 }

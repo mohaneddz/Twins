@@ -52,7 +52,7 @@ Future<void> showDeployFunctionsSheet(BuildContext context) async {
                 error = null;
               });
               try {
-                await deployEdgeFunctions(
+                final versions = await deployEdgeFunctions(
                   projectUrl: (await knownSupabaseConfig).url,
                   accessToken: token.text,
                   groqApiKey: groq.text,
@@ -60,10 +60,15 @@ Future<void> showDeployFunctionsSheet(BuildContext context) async {
                 );
                 if (sheetContext.mounted) {
                   Navigator.of(sheetContext).pop();
-                  showTwinsToast(context, 'Server functions updated');
+                  final summary = versions.entries.map((e) => '${e.key} v${e.value ?? '?'}').join(', ');
+                  showTwinsToast(context, 'Deployed $summary');
                 }
               } on SetupException catch (e) {
                 setState(() => error = e.message);
+              } catch (e) {
+                // Anything else (no network, an unexpected reply) must not
+                // look like success.
+                setState(() => error = "Couldn't deploy: $e");
               } finally {
                 if (sheetContext.mounted) setState(() => deploying = false);
               }
