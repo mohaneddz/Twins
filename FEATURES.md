@@ -29,7 +29,7 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 ## ⚠️ Still open
 
 - **Second twin's account** — slot 2 is still empty on the live project; create it from the other phone.
-- **AI vision not confirmed live** — after the first redeploy, vision on/off took the same time and gave text-only answers, so either the old function is still deployed or the server's Groq key can't use `qwen/qwen3.8-27b`. `resolve-link` now returns `ai_images` / `ai_vision_error`; redeploy (Settings → Update server functions) and check.
+- **In-app "Update server functions" didn't reach Supabase** (2026-11-02) — the functions stayed at the setup-time version; the sheet now reports every failure and the deployed version numbers. Deployed v3 of all three functions directly via the Management API; AI vision confirmed live (3 images, ~1s extra).
 - **Lint** (S) — ~19 `flutter analyze` infos, no errors.
 
 ## 👻 Known, deliberate non-features (not gaps)
@@ -39,7 +39,6 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 
 ## Next steps, in order
 
-1. Settings → Update server functions (turns on AI vision).
-2. Create twin 2 from the other phone.
-3. Lint cleanup.
-4. Push notifications — needs a Firebase project first (Android-only, so no APNs).
+1. Create twin 2 from the other phone.
+2. Lint cleanup.
+3. Push notifications — needs a Firebase project first (Android-only, so no APNs).
