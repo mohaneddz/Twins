@@ -9,6 +9,8 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/models/folder.dart';
 import '../../data/models/item.dart';
+import '../../data/supabase/invite_link.dart';
+import '../../data/supabase/supabase_client_provider.dart';
 import '../../state/ai_vision_provider.dart';
 import 'deploy_functions_sheet.dart';
 import '../../state/chat_naming_provider.dart';
@@ -119,6 +121,22 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: TwinsSpacing.lg),
           const _SectionLabel('Our Space'),
           _SettingsGroup(children: [
+            _SettingsTile(
+              icon: PhosphorIconsRegular.userPlus,
+              label: 'Invite your twin',
+              onTap: () async {
+                final config = await knownSupabaseConfig;
+                final link = buildInviteLink(url: config.url, publishableKey: config.publishableKey);
+                await Share.share(
+                  "Join me on ¡Twins! 💚 Install the app, then tap this link - or paste it on the app's first screen:\n$link",
+                );
+              },
+            ),
+            _SettingsTile(
+              icon: PhosphorIconsRegular.cloudArrowUp,
+              label: 'Update server functions',
+              onTap: () => showDeployFunctionsSheet(context),
+            ),
             _SettingsTile(icon: PhosphorIconsRegular.folders, label: 'Manage folders', onTap: () => context.push('/settings/manage-folders')),
             _SettingsTile(icon: PhosphorIconsRegular.tag, label: 'Manage tags', onTap: () => context.push('/settings/manage-tags')),
             _SettingsTile(
@@ -135,11 +153,6 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: TwinsSpacing.lg),
           const _SectionLabel('Server'),
           _SettingsGroup(children: [
-            _SettingsTile(
-              icon: PhosphorIconsRegular.cloudArrowUp,
-              label: 'Update server functions',
-              onTap: () => showDeployFunctionsSheet(context),
-            ),
           ]),
           const SizedBox(height: TwinsSpacing.lg),
           const _SectionLabel('About'),

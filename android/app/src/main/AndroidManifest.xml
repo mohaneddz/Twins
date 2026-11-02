@@ -39,8 +39,8 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
 
-            <!-- Optional deep link scheme (twins://...), configurable via
-                 EXPO_PUBLIC_APP_SCHEME for parity with the env var contract. -->
+            <!-- Invite links (twins://join?u=...&k=...) shared from Settings
+                 → Invite your twin; read by the setup screen. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

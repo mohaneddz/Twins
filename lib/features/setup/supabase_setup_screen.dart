@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../data/supabase/invite_link.dart';
 import '../../data/supabase/project_setup.dart';
 import '../../data/supabase/supabase_client_provider.dart';
 import '../../theme/colors.dart';
@@ -31,6 +32,7 @@ class _SupabaseSetupScreenState extends State<SupabaseSetupScreen> {
   final _connectionString = TextEditingController();
   final _accessToken = TextEditingController();
   final _groqKey = TextEditingController();
+  final _invite = TextEditingController();
 
   _Step _step = _Step.connect;
   ProjectStatus? _status;
@@ -41,18 +43,34 @@ class _SupabaseSetupScreenState extends State<SupabaseSetupScreen> {
   @override
   void initState() {
     super.initState();
-    knownSupabaseConfig.then((config) {
-      if (!mounted) return;
-      _url.text = config.url;
-      _key.text = config.publishableKey;
-      // Known project (special build, or an app update): check it right away.
-      if (config.url.isNotEmpty && config.publishableKey.isNotEmpty) _connect();
-    });
+    _prefill();
+  }
+
+  Future<void> _prefill() async {
+    // Opened from a twin's invite link: join their project.
+    final invite = parseInvite(await takeLaunchInviteLink() ?? '');
+    final config = await knownSupabaseConfig;
+    if (!mounted) return;
+    if (invite != null) {
+      _useInvite(invite);
+      return;
+    }
+    _url.text = config.url;
+    _key.text = config.publishableKey;
+    // Known project (special build, or an app update): check it right away.
+    if (config.url.isNotEmpty && config.publishableKey.isNotEmpty) _connect();
+  }
+
+  void _useInvite(({String url, String publishableKey}) invite) {
+    _url.text = invite.url;
+    _key.text = invite.publishableKey;
+    _invite.clear();
+    _connect();
   }
 
   @override
   void dispose() {
-    for (final c in [_url, _key, _connectionString, _accessToken, _groqKey]) {
+    for (final c in [_url, _key, _connectionString, _accessToken, _groqKey, _invite]) {
       c.dispose();
     }
     super.dispose();
@@ -169,7 +187,19 @@ class _SupabaseSetupScreenState extends State<SupabaseSetupScreen> {
         _subtitle(
           'Both twins use the same project. Find these in your Supabase dashboard → Project Settings → API Keys.',
         ),
-        const SizedBox(height: TwinsSpacing.xxl),
+        const SizedBox(height: TwinsSpacing.xl),
+        _label('Got an invite from your twin?'),
+        TwinsInput(
+          hint: 'Paste the invite link',
+          controller: _invite,
+          onChanged: (text) {
+            final invite = parseInvite(text);
+            if (invite != null) _useInvite(invite);
+          },
+        ),
+        const SizedBox(height: TwinsSpacing.lg),
+        Text('or set it up yourself', textAlign: TextAlign.center, style: TwinsTypography.label(TwinsColors.white.withValues(alpha: 0.5))),
+        const SizedBox(height: TwinsSpacing.lg),
         _label('Project URL'),
         TwinsInput(hint: 'https://xxxx.supabase.co', controller: _url, keyboardType: TextInputType.url),
         const SizedBox(height: TwinsSpacing.md),

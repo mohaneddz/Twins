@@ -11,8 +11,21 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    // Latest twins://join link the app was opened with, read by the setup
+    // screen to connect to the inviting twin's project.
+    private var inviteLink: String? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "twins/invite")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "takeLink") {
+                    result.success(inviteLink)
+                    inviteLink = null
+                } else {
+                    result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "twins/shareShortcut")
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -33,11 +46,18 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         reportShareUsage(intent)
+        rememberInvite(intent)
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         reportShareUsage(intent)
+        rememberInvite(intent)
+    }
+
+    private fun rememberInvite(intent: Intent?) {
+        val data = intent?.data ?: return
+        if (intent.action == Intent.ACTION_VIEW && data.scheme == "twins") inviteLink = data.toString()
     }
 
     // A long-lived shortcut with a Person is what Android ranks into the
