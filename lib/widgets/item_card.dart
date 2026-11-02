@@ -33,9 +33,16 @@ class ItemCard extends StatelessWidget {
           // Chunky corners to match the brand sheet's sticker-like cards.
           borderRadius: TwinsRadius.lgRadius,
           color: palette.surface,
-          border: selected ? Border.all(color: TwinsColors.mikuGreen, width: 2) : null,
           boxShadow: [BoxShadow(color: palette.shadow, blurRadius: 12, offset: const Offset(0, 4))],
         ),
+        // Painted over the content: as a plain decoration border the
+        // thumbnail covered its top edge.
+        foregroundDecoration: selected
+            ? BoxDecoration(
+                borderRadius: TwinsRadius.lgRadius,
+                border: Border.all(color: TwinsColors.mikuGreen, width: 3),
+              )
+            : null,
         clipBehavior: Clip.antiAlias,
         // Grid cells and the home strip hand the card a fixed height: there the
         // thumbnail takes whatever the text leaves, so the card has no blank
