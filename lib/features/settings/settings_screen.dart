@@ -9,8 +9,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/models/folder.dart';
 import '../../data/models/item.dart';
-import '../../data/supabase/invite_link.dart';
-import '../../data/supabase/supabase_client_provider.dart';
+import '../../sharing/twin_invite.dart';
 import '../../state/ai_vision_provider.dart';
 import 'deploy_functions_sheet.dart';
 import '../../state/chat_naming_provider.dart';
@@ -124,13 +123,7 @@ class SettingsScreen extends ConsumerWidget {
             _SettingsTile(
               icon: PhosphorIconsRegular.userPlus,
               label: 'Invite your twin',
-              onTap: () async {
-                final config = await knownSupabaseConfig;
-                final link = buildInviteLink(url: config.url, publishableKey: config.publishableKey);
-                await Share.share(
-                  "Join me on ¡Twins! 💚 Install the app, then tap this link - or paste it on the app's first screen:\n$link",
-                );
-              },
+              onTap: shareTwinInvite,
             ),
             _SettingsTile(
               icon: PhosphorIconsRegular.cloudArrowUp,

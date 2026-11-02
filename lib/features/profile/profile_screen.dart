@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../data/models/item_type.dart';
+import '../../data/models/profile.dart';
+import '../../sharing/twin_invite.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
 import '../../theme/colors.dart';
@@ -33,6 +35,12 @@ class ProfileScreen extends ConsumerWidget {
             final itemCount = itemsAsync.valueOrNull?.length ?? 0;
             final noteCount = itemsAsync.valueOrNull?.where((i) => i.type == ItemType.note).length ?? 0;
             final chatCount = chatsAsync.valueOrNull?.length ?? 0;
+            final members = membersAsync.valueOrNull ?? const <Profile>[];
+            final myId = ref.watch(authStateProvider).valueOrNull?.id;
+            // From the live members stream, so edits (yours or your twin's)
+            // show up without a refresh.
+            final me = members.where((m) => m.id == myId).firstOrNull;
+            final twin = members.where((m) => m.id != myId).firstOrNull;
 
             return RefreshIndicator(
               color: TwinsColors.mikuGreen,
@@ -61,17 +69,18 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    membersAsync.when(
-                      data: (members) => members.length >= 2
-                          ? TwinAvatars(a: members[0], b: members[1])
-                          : (members.isNotEmpty ? UserAvatar(profile: members.first, size: 90) : const SizedBox(height: 90)),
-                      loading: () => const SizedBox(height: 90),
-                      error: (e, _) => const SizedBox(height: 90),
-                    ),
-                    const SizedBox(height: TwinsSpacing.md),
-                    Text("¡We're Twins! 💚", style: TwinsTypography.heading(palette.textPrimary, size: 24)),
-                    const SizedBox(height: 4),
-                    Text('Joined ${_formatDate(space.createdAt)}', style: TwinsTypography.body(palette.textSecondary)),
+                    if (me != null) ...[
+                      UserAvatar(profile: me, size: 96),
+                      const SizedBox(height: TwinsSpacing.md),
+                      Text(me.displayName, style: TwinsTypography.heading(palette.textPrimary, size: 24)),
+                      Text('@${me.username}', style: TwinsTypography.body(TwinsColors.mikuGreen)),
+                      if ((me.bio ?? '').isNotEmpty) ...[
+                        const SizedBox(height: TwinsSpacing.xs),
+                        Text(me.bio!, textAlign: TextAlign.center, style: TwinsTypography.body(palette.textSecondary)),
+                      ],
+                      const SizedBox(height: 4),
+                      Text('Joined ${formatDate(me.createdAt)}', style: TwinsTypography.label(palette.textSecondary, size: 12)),
+                    ],
                     const SizedBox(height: TwinsSpacing.xl),
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: TwinsSpacing.md),
@@ -85,6 +94,8 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: TwinsSpacing.md),
+                    _TwinCard(twin: twin, loaded: membersAsync.hasValue),
                     const SizedBox(height: TwinsSpacing.md),
                     Container(
                       width: double.infinity,
@@ -117,7 +128,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  String _formatDate(DateTime dt) {
+  static String formatDate(DateTime dt) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
@@ -135,6 +146,63 @@ class _Stat extends StatelessWidget {
         children: [
           Text('$value', style: TwinsTypography.heading(context.twins.textPrimary, size: 22)),
           Text(label, style: TwinsTypography.body(context.twins.textSecondary, size: 12)),
+        ],
+      ),
+    );
+  }
+}
+
+/// The other twin's profile, or an invite while their slot is still empty.
+class _TwinCard extends StatelessWidget {
+  final Profile? twin;
+  final bool loaded;
+  const _TwinCard({required this.twin, required this.loaded});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.twins;
+    final twin = this.twin;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(TwinsSpacing.lg),
+      decoration: BoxDecoration(color: palette.surfaceMuted, borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Your twin', style: TwinsTypography.heading(palette.textPrimary, size: 16)),
+          const SizedBox(height: TwinsSpacing.sm),
+          if (twin != null)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                UserAvatar(profile: twin, size: 56),
+                const SizedBox(width: TwinsSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(twin.displayName, style: TwinsTypography.heading(palette.textPrimary, size: 17)),
+                      Text('@${twin.username}', style: TwinsTypography.body(TwinsColors.mikuGreen, size: 14)),
+                      const SizedBox(height: 4),
+                      Text(
+                        (twin.bio ?? '').isNotEmpty ? twin.bio! : 'No bio yet',
+                        style: TwinsTypography.body(palette.textSecondary, size: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Joined ${ProfileScreen.formatDate(twin.createdAt)}',
+                        style: TwinsTypography.label(palette.textSecondary, size: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          else if (loaded) ...[
+            Text("Your twin hasn't joined yet.", style: TwinsTypography.body(palette.textSecondary)),
+            const SizedBox(height: TwinsSpacing.sm),
+            SecondaryButton(label: 'Send them an invite', onPressed: shareTwinInvite),
+          ],
         ],
       ),
     );
