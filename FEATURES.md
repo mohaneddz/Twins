@@ -25,7 +25,7 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 
 ## ❌ Blocked on something outside the code
 
-- **Push notifications — one secret missing.** Built: one shared Firebase project (`twins-6e30c`, `google-services.json` in the app), a `push-relay` function on the maintainer's Supabase (the only holder of the Firebase key), and per-pair `device_tokens` (`0017`) + `notify` that setup deploys and wires to the relay. Remaining: set `FIREBASE_SERVICE_ACCOUNT_B64` (from `supabase/.env`) as a secret on the relay project, then test on two phones.
+- **Push notifications — built, not yet seen on a phone.** One shared Firebase project (`twins-6e30c`, `google-services.json` in the app), a `push-relay` function on the maintainer's Supabase (the only holder of the Firebase key — verified against FCM: auth works, dead tokens are reported), and per-pair `device_tokens` (`0017`) + `notify`, which setup deploys and wires to the relay. Remaining: install the new build on both phones and send something.
 - **iOS** — out of scope: the app is Android-only for now (no share extension, never built for iOS).
 
 ## ⚠️ Still open
@@ -43,4 +43,4 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 
 1. Create twin 2 from the other phone.
 2. Lint cleanup.
-3. Add the relay's Firebase secret and test push on two phones.
+3. Test push on two phones.
