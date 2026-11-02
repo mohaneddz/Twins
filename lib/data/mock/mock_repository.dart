@@ -97,6 +97,12 @@ class MockTwinsRepository implements TwinsRepository {
   }
 
   @override
+  Future<void> registerDeviceToken(String token) async {}
+
+  @override
+  Future<void> unregisterDeviceToken(String token) async {}
+
+  @override
   Future<void> logOut() async {
     await _delay();
     _authed = null;

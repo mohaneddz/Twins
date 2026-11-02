@@ -4,13 +4,16 @@ import 'data/supabase/supabase_client_provider.dart';
 import 'features/setup/supabase_setup_screen.dart';
 import 'routing/app_router.dart';
 import 'sharing/share_intent_service.dart';
+import 'notifications/push_notifications.dart';
 import 'sharing/share_shortcut.dart';
 import 'state/auth_providers.dart';
+import 'state/repository_provider.dart';
 import 'state/theme_provider.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await PushNotifications.init();
   if (await isSetupComplete) {
     await initSupabaseFromStoredConfig();
     runApp(const ProviderScope(child: TwinsApp()));
@@ -46,6 +49,15 @@ class _TwinsAppState extends ConsumerState<TwinsApp> {
     super.initState();
     ShareIntentService.instance.start();
     ShareIntentService.instance.sharedTextStream.listen(_handleIncomingShare);
+    PushNotifications.tappedRoutes().listen(_openNotification);
+  }
+
+  void _openNotification(String route) {
+    if (ref.read(currentSpaceProvider).valueOrNull == null) {
+      PushNotifications.pendingRoute = route;
+    } else {
+      ref.read(routerProvider).push(route);
+    }
   }
 
   Future<void> _handleIncomingShare(String text) async {
@@ -69,6 +81,7 @@ class _TwinsAppState extends ConsumerState<TwinsApp> {
       final space = next.valueOrNull;
       if (space != null) {
         ShareShortcut.publish(space.name);
+        PushNotifications.register(ref.read(repositoryProvider));
       } else if (!next.isLoading) {
         ShareShortcut.remove();
       }

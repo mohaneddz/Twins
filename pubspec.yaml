@@ -71,6 +71,8 @@ dependencies:
   url_launcher: ^6.3.1
   collection: ^1.19.1
   postgres: ^3.5.20
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
 
 dev_dependencies:
   flutter_test:
@@ -143,6 +145,7 @@ flutter:
     - supabase/functions/resolve-link/
     - supabase/functions/suggest-tags/
     - supabase/functions/name-chat/
+    - supabase/functions/notify/
 
   # Bundled rather than fetched at runtime so the brand type is present on
   # first launch and offline. Both are variable fonts; weights are selected

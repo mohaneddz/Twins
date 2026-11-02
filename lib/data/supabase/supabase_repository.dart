@@ -111,6 +111,19 @@ class SupabaseTwinsRepository implements TwinsRepository {
   @override
   Future<void> logOut() => supa.auth.signOut();
 
+  @override
+  Future<void> registerDeviceToken(String token) => supa.rpc('register_device_token', params: {'p_token': token});
+
+  @override
+  Future<void> unregisterDeviceToken(String token) => supa.rpc('unregister_device_token', params: {'p_token': token});
+
+  /// Push to the other twin's phones (see the notify edge function).
+  /// Best-effort and not awaited: a missing function or relay must never
+  /// slow down or fail the save itself.
+  void _notifyTwin(String kind, String id) {
+    supa.functions.invoke('notify', body: {'kind': kind, 'id': id}).catchError((_) => FunctionResponse(status: 0));
+  }
+
 
   @override
   Future<void> updatePassword(String newPassword) async {
@@ -268,7 +281,9 @@ class SupabaseTwinsRepository implements TwinsRepository {
       'p_metadata': draft.metadata,
       'p_duration_ms': draft.durationMs,
     }) as Map<String, dynamic>;
-    return TwinsItem.fromJson(row);
+    final created = TwinsItem.fromJson(row);
+    _notifyTwin('item', created.id);
+    return created;
   }
 
   @override
@@ -505,7 +520,9 @@ class SupabaseTwinsRepository implements TwinsRepository {
       'p_body': body,
       'p_attached_item_id': attachedItemId,
     }) as Map<String, dynamic>;
-    return TwinsMessage.fromJson(row);
+    final sent = TwinsMessage.fromJson(row);
+    _notifyTwin('message', sent.id);
+    return sent;
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../notifications/push_notifications.dart';
 import '../../sharing/share_intent_service.dart';
 import '../chat/chat_list_screen.dart';
 import '../folders/all_folders_screen.dart';
@@ -30,6 +31,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       if (pending != null && mounted) {
         context.push('/add', extra: {'sharedText': pending});
       }
+      final route = PushNotifications.pendingRoute;
+      PushNotifications.pendingRoute = null;
+      if (route != null && mounted) context.push(route);
     });
   }
 

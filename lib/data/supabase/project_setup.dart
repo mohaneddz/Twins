@@ -10,9 +10,15 @@ import 'package:postgres/postgres.dart';
 
 /// Schema version this build of the app expects; must match the number
 /// returned by `twins_schema_version()` in the newest migration.
-const requiredSchemaVersion = 16;
+const requiredSchemaVersion = 17;
 
-const edgeFunctions = ['resolve-link', 'suggest-tags', 'name-chat'];
+const edgeFunctions = ['resolve-link', 'suggest-tags', 'name-chat', 'notify'];
+
+/// The shared push relay every project's `notify` function forwards to (see
+/// supabase/relay/push-relay). Baked in at build time from supabase/.env by
+/// the build scripts; when empty, projects are set up without push.
+const _relayUrl = String.fromEnvironment('TWINS_RELAY_URL');
+const _relayKey = String.fromEnvironment('TWINS_RELAY_KEY');
 
 class ProjectStatus {
   final int schemaVersion;
@@ -182,17 +188,23 @@ Future<Map<String, int?>> deployEdgeFunctions({
   }
 
   final groq = groqApiKey?.trim() ?? '';
-  if (groq.isNotEmpty) {
-    onStep?.call('Groq key');
+  final secrets = [
+    if (groq.isNotEmpty) {'name': 'GROQ_API_KEY', 'value': groq},
+    // Lets this project's notify function reach the push relay.
+    if (_relayUrl.isNotEmpty && _relayKey.isNotEmpty) ...[
+      {'name': 'TWINS_RELAY_URL', 'value': _relayUrl},
+      {'name': 'TWINS_RELAY_KEY', 'value': _relayKey},
+    ],
+  ];
+  if (secrets.isNotEmpty) {
+    onStep?.call('settings');
     final response = await http.post(
       Uri.parse('$base/secrets'),
       headers: {...auth, 'Content-Type': 'application/json'},
-      body: jsonEncode([
-        {'name': 'GROQ_API_KEY', 'value': groq},
-      ]),
+      body: jsonEncode(secrets),
     );
     if (response.statusCode >= 300) {
-      throw SetupException('Saving the Groq key failed (${response.statusCode}): ${response.body}');
+      throw SetupException('Saving function settings failed (${response.statusCode}): ${response.body}');
     }
   }
   return versions;

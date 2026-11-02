@@ -28,6 +28,10 @@ abstract class TwinsRepository {
   Future<Profile> logIn({required String email, required String password});
   Future<void> logOut();
 
+  /// Push notification address of this phone, for the signed-in twin.
+  Future<void> registerDeviceToken(String token);
+  Future<void> unregisterDeviceToken(String token);
+
   /// There's no recovery email: either twin can set a new password for the
   /// other one (or themselves) while signed in.
   Future<void> resetTwinPassword({required int slot, required String password});

@@ -18,10 +18,22 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Push relay settings (supabase/.env, git-ignored) so setup can wire each
+# project's notify function to the shared relay. Missing = no push.
+$relayDefines = @()
+$serverEnv = Join-Path $PSScriptRoot "..\supabase\.env"
+if (Test-Path $serverEnv) {
+    Get-Content $serverEnv | ForEach-Object {
+        if ($_ -match '^\s*(TWINS_RELAY_URL|TWINS_RELAY_KEY)\s*=\s*(.*?)\s*$') {
+            $relayDefines += "--dart-define=$($matches[1])=$($matches[2])"
+        }
+    }
+}
+
 Write-Host "Building 'normal' (no-embed) target=$Target" -ForegroundColor Cyan
 
 switch ($Target) {
-    "run" { flutter run }
-    "appbundle" { flutter build appbundle }
-    default { flutter build apk }
+    "run" { flutter run @relayDefines }
+    "appbundle" { flutter build appbundle @relayDefines }
+    default { flutter build apk @relayDefines }
 }

@@ -231,10 +231,10 @@ class _SupabaseSetupScreenState extends State<SupabaseSetupScreen> {
       ];
 
   List<Widget> _functionsStep() => [
-        _title('Link previews & AI'),
+        _title('Link previews, AI & notifications'),
         _subtitle(
-          'Optional. Deploys the three small server functions that fetch link previews, suggest tags and name chats. '
-          'Without them ¡Twins! still works, links just save without a preview.',
+          'Optional. Deploys the small server functions that fetch link previews, suggest tags, name chats and '
+          'notify your twin. Without them ¡Twins! still works, just without previews or notifications.',
         ),
         const SizedBox(height: TwinsSpacing.lg),
         _hint('Create an access token at supabase.com/dashboard/account/tokens. A Groq key (console.groq.com/keys) turns on the AI parts. '

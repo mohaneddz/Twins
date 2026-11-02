@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "100483623565",
+    "project_id": "twins-6e30c",
+    "storage_bucket": "twins-6e30c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100483623565:android:7e9b26ffcb2db877aa90c4",
+        "android_client_info": {
+          "package_name": "com.mohaned.twins"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBh-KCzdwsSqaHOLLqrr0jEyoieWl8uBw4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

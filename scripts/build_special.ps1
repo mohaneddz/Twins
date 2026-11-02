@@ -44,6 +44,19 @@ if ([string]::IsNullOrWhiteSpace($url) -or [string]::IsNullOrWhiteSpace($key)) {
 
 $defines = @("--dart-define=SUPABASE_URL=$url", "--dart-define=SUPABASE_PUBLISHABLE_KEY=$key")
 
+# Push relay settings (supabase/.env, git-ignored) so setup can wire each
+# project's notify function to the shared relay. Missing = no push.
+$relayDefines = @()
+$serverEnv = Join-Path $PSScriptRoot "..\supabase\.env"
+if (Test-Path $serverEnv) {
+    Get-Content $serverEnv | ForEach-Object {
+        if ($_ -match '^\s*(TWINS_RELAY_URL|TWINS_RELAY_KEY)\s*=\s*(.*?)\s*$') {
+            $relayDefines += "--dart-define=$($matches[1])=$($matches[2])"
+        }
+    }
+}
+$defines += $relayDefines
+
 Write-Host "Building 'special' (embedded) target=$Target against $url" -ForegroundColor Cyan
 
 switch ($Target) {

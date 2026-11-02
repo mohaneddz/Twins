@@ -9,6 +9,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/models/folder.dart';
 import '../../data/models/item.dart';
+import '../../notifications/push_notifications.dart';
 import '../../sharing/twin_invite.dart';
 import '../../state/ai_vision_provider.dart';
 import 'deploy_functions_sheet.dart';
@@ -159,6 +160,7 @@ class SettingsScreen extends ConsumerWidget {
             onPressed: () async {
               final confirmed = await showConfirmDialog(context, title: 'Log out?', message: 'You can log back in anytime.', confirmLabel: 'Log out');
               if (confirmed) {
+                await PushNotifications.unregister(ref.read(repositoryProvider));
                 await ref.read(repositoryProvider).logOut();
                 if (context.mounted) context.go('/welcome');
               }
