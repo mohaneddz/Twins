@@ -39,7 +39,7 @@ class TwinsBottomNav extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             navIcon(PhosphorIconsFill.house, PhosphorIconsRegular.house, 0, 'Home'),
-            navIcon(PhosphorIconsFill.folder, PhosphorIconsRegular.folder, 1, 'Folders'),
+            navIcon(PhosphorIconsFill.calendarBlank, PhosphorIconsRegular.calendarBlank, 1, 'Calendar'),
             Semantics(
               button: true,
               label: 'Add something',

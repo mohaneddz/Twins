@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../notifications/push_notifications.dart';
 import '../../sharing/share_intent_service.dart';
 import '../chat/chat_list_screen.dart';
-import '../folders/all_folders_screen.dart';
+import '../../notifications/plan_reminders.dart';
+import '../../state/auth_providers.dart';
+import '../../state/data_providers.dart';
+import '../calendar/calendar_screen.dart';
 import '../profile/profile_screen.dart';
 import 'home_dashboard_screen.dart';
 import '../../widgets/twins_bottom_nav.dart';
@@ -19,7 +22,7 @@ class HomeShell extends ConsumerStatefulWidget {
 }
 
 class _HomeShellState extends ConsumerState<HomeShell> {
-  int _tabIndex = 0; // 0 home, 1 folders, 2 chat, 3 profile
+  int _tabIndex = 0; // 0 home, 1 calendar, 2 chat, 3 profile
 
   @override
   void initState() {
@@ -41,13 +44,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   final _pages = const [
     HomeDashboardScreen(),
-    AllFoldersScreen(),
+    CalendarScreen(),
     ChatListScreen(),
     ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    // Keeps this phone's reminder alarms in line with the shared calendar
+    // for as long as anyone is signed in.
+    final spaceId = ref.watch(currentSpaceProvider).valueOrNull?.id;
+    if (spaceId != null) {
+      ref.listen(eventsProvider(spaceId), (_, next) {
+        final events = next.valueOrNull;
+        if (events != null) PlanReminders.sync(events);
+      });
+    }
     return Scaffold(
       body: IndexedStack(index: _tabIndex, children: _pages),
       bottomNavigationBar: TwinsBottomNav(

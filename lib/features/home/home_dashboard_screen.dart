@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../data/models/item.dart';
-import '../../state/auth_providers.dart' show currentSpaceProvider;
+import '../../state/auth_providers.dart' show authStateProvider, currentSpaceProvider;
 import '../../state/activity_provider.dart';
 import '../../state/data_providers.dart';
 import '../../state/greeting_provider.dart';
@@ -12,6 +12,7 @@ import '../../theme/palette.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/event_card.dart';
 import '../../widgets/folder_card.dart';
 import '../../widgets/item_card.dart';
 import '../../widgets/filter_chip_twins.dart';
@@ -39,6 +40,31 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
     } else {
       _toggle(item.id);
     }
+  }
+
+  /// Home shows a taste of Everything; the rest is on the Saved page.
+  static const _homeGridLimit = 12;
+
+  /// The next few plans, when there are any.
+  List<Widget> _comingUp(String spaceId) {
+    final upcoming = ref.watch(upcomingEventsProvider(spaceId)).take(3).toList();
+    if (upcoming.isEmpty) return const [];
+    final myId = ref.watch(authStateProvider).valueOrNull?.id;
+    return [
+      const SizedBox(height: TwinsSpacing.xl),
+      Text('Coming up', style: TwinsTypography.heading(context.twins.textPrimary, size: 17)),
+      const SizedBox(height: TwinsSpacing.sm),
+      for (final event in upcoming)
+        Padding(
+          padding: const EdgeInsets.only(bottom: TwinsSpacing.xs),
+          child: EventCard(
+            event: event,
+            accent: planAccent(event, myId),
+            compact: true,
+            onTap: () => context.push('/event/${event.id}'),
+          ),
+        ),
+    ];
   }
 
   String _badgeLabel(int count) => count > 9 ? '9+' : '$count';
@@ -103,6 +129,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                       Text('Hey twins! 👋', style: TwinsTypography.heading(palette.textPrimary, size: 22)),
                       Text('What are we saving today?', style: TwinsTypography.body(palette.textSecondary)),
                     ],
+                    ..._comingUp(space.id),
                     const SizedBox(height: TwinsSpacing.xl),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -122,7 +149,16 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                     _RecentItemsStrip(spaceId: space.id, selected: _selected, onTap: _onItemTap, onLongPress: _toggle),
                     if (allItems.isNotEmpty) ...[
                       const SizedBox(height: TwinsSpacing.xl),
-                      Text('Everything', style: TwinsTypography.heading(palette.textPrimary, size: 17)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Everything', style: TwinsTypography.heading(palette.textPrimary, size: 17)),
+                          GestureDetector(
+                            onTap: () => context.push('/saved'),
+                            child: Text('See all', style: TwinsTypography.label(TwinsColors.mikuGreen)),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: TwinsSpacing.sm),
                       Row(
                         children: [
@@ -137,7 +173,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                       ),
                       const SizedBox(height: TwinsSpacing.sm),
                       _EverythingGrid(
-                        items: _unfiledOnly ? allItems.where((i) => i.folderIds.isEmpty).toList() : allItems,
+                        items: (_unfiledOnly ? allItems.where((i) => i.folderIds.isEmpty) : allItems).take(_homeGridLimit).toList(),
                         selected: _selected,
                         onTap: _onItemTap,
                         onLongPress: _toggle,

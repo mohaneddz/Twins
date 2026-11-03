@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/user_picker_screen.dart';
+import '../features/calendar/event_detail_screen.dart';
 import '../features/chat/chat_screen.dart';
+import '../features/items/saved_screen.dart';
 import '../features/folders/all_folders_screen.dart';
 import '../features/home/activity_screen.dart';
 import '../features/home/home_shell.dart';
@@ -67,6 +69,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeShell(),
       ),
       GoRoute(path: '/folders', builder: (context, state) => const AllFoldersScreen()),
+      GoRoute(path: '/saved', builder: (context, state) => const SavedScreen()),
+      GoRoute(
+        path: '/event/:id',
+        builder: (context, state) => EventDetailScreen(eventId: state.pathParameters['id']!),
+      ),
       GoRoute(path: '/search', builder: (context, state) => SearchScreen(initialQuery: state.uri.queryParameters['q'])),
       GoRoute(path: '/activity', builder: (context, state) => const ActivityScreen()),
       GoRoute(

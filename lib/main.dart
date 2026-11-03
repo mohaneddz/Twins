@@ -4,6 +4,7 @@ import 'data/supabase/supabase_client_provider.dart';
 import 'features/setup/supabase_setup_screen.dart';
 import 'routing/app_router.dart';
 import 'sharing/share_intent_service.dart';
+import 'notifications/plan_reminders.dart';
 import 'notifications/push_notifications.dart';
 import 'sharing/share_shortcut.dart';
 import 'state/auth_providers.dart';
@@ -14,6 +15,7 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await PushNotifications.init();
+  await PlanReminders.init();
   if (await isSetupComplete) {
     await initSupabaseFromStoredConfig();
     runApp(const ProviderScope(child: TwinsApp()));
@@ -50,6 +52,7 @@ class _TwinsAppState extends ConsumerState<TwinsApp> {
     ShareIntentService.instance.start();
     ShareIntentService.instance.sharedTextStream.listen(_handleIncomingShare);
     PushNotifications.tappedRoutes().listen(_openNotification);
+    PlanReminders.tappedRoutes().listen(_openNotification);
   }
 
   void _openNotification(String route) {

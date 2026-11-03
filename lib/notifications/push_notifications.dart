@@ -5,6 +5,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../data/repositories/twins_repository.dart';
+import 'plan_reminders.dart';
+
+/// Runs in its own isolate when a push lands while the app is closed or in
+/// the background: a plan push carries the plan's time so the reminder alarm
+/// can be set (or dropped) right away.
+@pragma('vm:entry-point')
+Future<void> _onBackgroundPush(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  await PlanReminders.applyPush(message.data);
+}
 
 /// Push notifications through the app's single Firebase project. This phone's
 /// token is stored in the pair's own Supabase (device_tokens) so their
@@ -25,6 +35,8 @@ class PushNotifications {
     if (!Platform.isAndroid) return;
     try {
       await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(_onBackgroundPush);
+      FirebaseMessaging.onMessage.listen((message) => PlanReminders.applyPush(message.data));
       _ready = true;
     } catch (_) {
       _ready = false;

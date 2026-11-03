@@ -73,6 +73,7 @@ class TwinsEvent {
     String? itemId,
     bool clearItem = false,
     DateTime? cancelledAt,
+    bool restore = false,
   }) =>
       TwinsEvent(
         id: id,
@@ -87,7 +88,7 @@ class TwinsEvent {
         remindMinutes: clearReminder ? null : remindMinutes ?? this.remindMinutes,
         itemId: clearItem ? null : itemId ?? this.itemId,
         chatId: chatId,
-        cancelledAt: cancelledAt ?? this.cancelledAt,
+        cancelledAt: restore ? null : cancelledAt ?? this.cancelledAt,
         createdAt: createdAt,
         updatedAt: DateTime.now(),
       );
