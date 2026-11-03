@@ -13,6 +13,9 @@ import '../models/twin_slot.dart';
 import '../models/upload_result.dart';
 import '../models/user_settings.dart';
 
+/// What Settings → Clear data wipes; see migration 0019.
+enum ClearScope { items, folders, chats, all }
+
 /// Data access abstraction. [SupabaseTwinsRepository] backs the running app;
 /// [MockTwinsRepository] is a fake used only by the test suite. UI code
 /// should only ever depend on this interface.
@@ -181,6 +184,9 @@ abstract class TwinsRepository {
   // ---- Settings ----
   Future<TwinsUserSettings> getSettings(String userId);
   Future<TwinsUserSettings> updateSettings(TwinsUserSettings settings);
+
+  /// Wipes one kind of thing from the space for both twins. Can't be undone.
+  Future<void> clearSpace(String spaceId, ClearScope what);
 
   // ---- Export ----
   Future<Map<String, dynamic>> exportSpace(String spaceId);

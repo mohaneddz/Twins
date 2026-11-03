@@ -636,6 +636,19 @@ class SupabaseTwinsRepository implements TwinsRepository {
     return TwinsUserSettings.fromJson(row);
   }
 
+  @override
+  Future<void> clearSpace(String spaceId, ClearScope what) async {
+    if (what == ClearScope.items || what == ClearScope.all) {
+      // Uploaded files first: once the rows are gone nothing points at them.
+      final rows = await supa.from('items').select('storage_path').eq('space_id', spaceId).not('storage_path', 'is', null);
+      final paths = rows.map((r) => r['storage_path'] as String).toList();
+      for (var i = 0; i < paths.length; i += 100) {
+        await supa.storage.from('spaces').remove(paths.sublist(i, i + 100 > paths.length ? paths.length : i + 100));
+      }
+    }
+    await supa.rpc('clear_space', params: {'p_space_id': spaceId, 'p_what': what.name});
+  }
+
   // ---- Export ----
   @override
   Future<Map<String, dynamic>> exportSpace(String spaceId) async {

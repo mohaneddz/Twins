@@ -765,6 +765,32 @@ class MockTwinsRepository implements TwinsRepository {
     return settings;
   }
 
+  @override
+  Future<void> clearSpace(String spaceId, ClearScope what) async {
+    if (what == ClearScope.items || what == ClearScope.all) {
+      _items.removeWhere((i) => i.spaceId == spaceId);
+      _itemsController.add(null);
+    }
+    if (what == ClearScope.folders) {
+      _items = [for (final i in _items) i.spaceId == spaceId ? i.copyWith(folderIds: const []) : i];
+      _itemsController.add(null);
+    }
+    if (what == ClearScope.chats || what == ClearScope.all) {
+      _chats.removeWhere((c) => c.spaceId == spaceId);
+      _messages.removeWhere((m) => m.spaceId == spaceId);
+      _chatsController.add(null);
+      _messagesController.add(null);
+    }
+    if (what == ClearScope.all) {
+      _events.removeWhere((e) => e.spaceId == spaceId);
+      _folders.removeWhere((f) => f.spaceId == spaceId);
+      _tags.removeWhere((t) => t.spaceId == spaceId);
+      _eventsController.add(null);
+      _foldersController.add(null);
+      _tagsController.add(null);
+    }
+  }
+
   // ---- Export ----
   @override
   Future<Map<String, dynamic>> exportSpace(String spaceId) async {
