@@ -33,6 +33,15 @@ android {
         versionName = flutter.versionName
     }
 
+    // The APK is downloaded from GitHub releases, so compress the native
+    // libraries in it: about a third smaller to download, at the cost of
+    // Android unpacking them once on install.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
