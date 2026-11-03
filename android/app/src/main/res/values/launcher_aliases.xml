@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 7 has no adaptive icons: there the colour launchers reuse the
+     default artwork. Android 8+ uses mipmap-anydpi-v26/ic_launcher_*.xml. -->
+<resources>
+    <item name="ic_launcher_sakura" type="mipmap">@mipmap/ic_launcher</item>
+    <item name="ic_launcher_lavender" type="mipmap">@mipmap/ic_launcher</item>
+    <item name="ic_launcher_sky" type="mipmap">@mipmap/ic_launcher</item>
+    <item name="ic_launcher_peach" type="mipmap">@mipmap/ic_launcher</item>
+</resources>

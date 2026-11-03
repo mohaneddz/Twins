@@ -32,8 +32,14 @@ if (Test-Path $serverEnv) {
 
 Write-Host "Building 'normal' (no-embed) target=$Target" -ForegroundColor Cyan
 
+# Phones only (no x86 emulator builds), one APK per CPU type so each is a
+# third of a universal one, and Dart symbols kept out of the app (they land
+# in build/symbols for reading crash stacks).
+$bundleFlags = @("--obfuscate", "--split-debug-info=build/symbols")
+$apkFlags = $bundleFlags + @("--split-per-abi", "--target-platform", "android-arm,android-arm64")
+
 switch ($Target) {
     "run" { flutter run @relayDefines }
-    "appbundle" { flutter build appbundle @relayDefines }
-    default { flutter build apk @relayDefines }
+    "appbundle" { flutter build appbundle @bundleFlags @relayDefines }
+    default { flutter build apk @apkFlags @relayDefines }
 }

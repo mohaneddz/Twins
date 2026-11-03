@@ -141,7 +141,9 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/
+    # Only what the app loads at runtime; the icon sources in assets/ are
+    # for flutter_launcher_icons / flutter_native_splash and stay out of the APK.
+    - assets/splash.png
     # Applied by SchemaInstaller when a fresh project is set up from the app.
     - supabase/migrations/
     - supabase/functions/resolve-link/
