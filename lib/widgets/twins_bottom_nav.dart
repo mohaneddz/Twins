@@ -51,7 +51,7 @@ class TwinsBottomNav extends StatelessWidget {
                     color: context.twins.accent,
                     shape: BoxShape.circle,
                     boxShadow: [
-                      BoxShadow(color: Color(0x5900B3A4), blurRadius: 14, offset: Offset(0, 4)),
+                      BoxShadow(color: context.twins.accent.withValues(alpha: 0.35), blurRadius: 14, offset: const Offset(0, 4)),
                     ],
                   ),
                   child: const Icon(Icons.add, color: Colors.white, size: 28),

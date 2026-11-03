@@ -6,11 +6,13 @@ import '../data/models/item_type.dart';
 import '../state/twin_color_provider.dart';
 import '../theme/palette.dart';
 import '../theme/colors.dart';
-import '../theme/radius.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
 import 'media_thumbnail.dart';
 import 'platform_badge.dart';
+
+/// Saved posts read as photos more than stickers, so the corners stay small.
+const _cardRadius = BorderRadius.all(Radius.circular(12));
 
 /// Grid card used in the dashboard "Recently added" strip and folder grids.
 /// A stripe along the bottom is the colour of the twin who saved it.
@@ -29,13 +31,13 @@ class ItemCard extends ConsumerWidget {
     final ownerColor = ref.watch(colorOfUserProvider(item.createdBy)).accent;
 
     return InkWell(
-      borderRadius: TwinsRadius.lgRadius,
+      borderRadius: _cardRadius,
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
         decoration: BoxDecoration(
           // Chunky corners to match the brand sheet's sticker-like cards.
-          borderRadius: TwinsRadius.lgRadius,
+          borderRadius: _cardRadius,
           color: palette.surface,
           boxShadow: [BoxShadow(color: palette.shadow, blurRadius: 12, offset: const Offset(0, 4))],
         ),
@@ -43,7 +45,7 @@ class ItemCard extends ConsumerWidget {
         // thumbnail covered its top edge.
         foregroundDecoration: selected
             ? BoxDecoration(
-                borderRadius: TwinsRadius.lgRadius,
+                borderRadius: _cardRadius,
                 border: Border.all(color: context.twins.accent, width: 3),
               )
             : null,

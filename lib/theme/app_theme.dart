@@ -26,7 +26,9 @@ class AppTheme {
       brightness: brightness,
       primary: accent,
       onPrimary: TwinsColors.white,
-      secondary: TwinsColors.vibrantBlue,
+      secondary: accent,
+      secondaryContainer: accent,
+      onSecondaryContainer: TwinsColors.white,
       onSecondary: TwinsColors.white,
       error: TwinsColors.danger,
       onError: TwinsColors.white,
@@ -131,6 +133,11 @@ class AppTheme {
         subtitleTextStyle: TwinsTypography.body(textSecondary, size: 13),
       ),
       iconTheme: IconThemeData(color: textSecondary),
+      chipTheme: ChipThemeData(
+        selectedColor: accent,
+        checkmarkColor: TwinsColors.white,
+        secondaryLabelStyle: TwinsTypography.label(TwinsColors.white, size: 14),
+      ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: accent),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,

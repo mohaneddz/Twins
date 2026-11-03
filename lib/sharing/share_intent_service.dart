@@ -50,6 +50,9 @@ class ShareIntentService {
     switch (file.type) {
       case SharedMediaType.url:
       case SharedMediaType.text:
+        // The plugin also reports the twins://join link the app was opened
+        // with; that's an invite for the setup screen, not something to save.
+        if (file.path.startsWith('twins://')) return null;
         return file.path;
       case SharedMediaType.image:
       case SharedMediaType.video:
