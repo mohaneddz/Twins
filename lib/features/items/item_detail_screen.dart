@@ -10,6 +10,7 @@ import '../../data/models/item.dart';
 import '../../data/models/item_type.dart';
 import '../../data/models/profile.dart';
 import '../../data/models/reaction.dart';
+import '../calendar/event_editor_sheet.dart';
 import '../folders/folder_dialogs.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
@@ -150,6 +151,14 @@ class _ItemDetailBody extends ConsumerWidget {
               children: [
                 IconButton(icon: const Icon(PhosphorIconsBold.caretLeft, color: Colors.white), onPressed: () => context.pop()),
                 const Spacer(),
+                IconButton(
+                  tooltip: 'Plan it',
+                  icon: const Icon(PhosphorIconsBold.calendarPlus, color: Colors.white),
+                  onPressed: () async {
+                    final event = await showEventEditor(context, spaceId: item.spaceId, itemId: item.id, initialTitle: item.title);
+                    if (event != null && context.mounted) showTwinsToast(context, 'On the calendar');
+                  },
+                ),
                 IconButton(
                   icon: Icon(item.isPinned ? PhosphorIconsFill.bookmarkSimple : PhosphorIconsRegular.bookmarkSimple, color: Colors.white),
                   onPressed: () async {

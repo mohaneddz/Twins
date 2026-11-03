@@ -15,12 +15,14 @@ import '../../state/ai_vision_provider.dart';
 import 'deploy_functions_sheet.dart';
 import '../../state/chat_naming_provider.dart';
 import '../../state/greeting_provider.dart';
+import '../../state/plan_reminder_provider.dart';
 import '../../state/repository_provider.dart';
 import '../../state/theme_provider.dart';
 import '../../theme/colors.dart';
 import '../../theme/radius.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
+import '../../utils/formatters.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/toast.dart';
 
@@ -99,6 +101,29 @@ class SettingsScreen extends ConsumerWidget {
                 ],
                 onChanged: (n) {
                   if (n != null) ref.read(chatRenameEveryProvider.notifier).set(n);
+                },
+              ),
+            ),
+          ]),
+          const SizedBox(height: TwinsSpacing.lg),
+          const _SectionLabel('Calendar'),
+          _SettingsGroup(children: [
+            _SettingsTile(
+              icon: PhosphorIconsRegular.bellRinging,
+              label: 'Remind us before plans',
+              // -1 stands for "no reminder": a dropdown can't select null.
+              trailing: DropdownButton<int>(
+                value: ref.watch(planDefaultReminderProvider) ?? -1,
+                underline: const SizedBox.shrink(),
+                items: [
+                  for (final choice in planReminderChoices)
+                    DropdownMenuItem(
+                      value: choice ?? -1,
+                      child: Text(choice == null ? 'Never' : choice == 0 ? 'At the time' : formatLeadTime(choice)),
+                    ),
+                ],
+                onChanged: (n) {
+                  if (n != null) ref.read(planDefaultReminderProvider.notifier).set(n < 0 ? null : n);
                 },
               ),
             ),

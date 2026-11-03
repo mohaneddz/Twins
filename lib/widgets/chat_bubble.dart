@@ -18,6 +18,12 @@ class ChatBubble extends StatelessWidget {
   final VoidCallback? onTapAttachment;
   final VoidCallback? onLongPress;
 
+  /// The message this one answers, drawn above the text.
+  final Widget? quote;
+
+  /// A plan card, drawn where an attached item would be.
+  final Widget? attachment;
+
   const ChatBubble({
     super.key,
     required this.body,
@@ -28,6 +34,8 @@ class ChatBubble extends StatelessWidget {
     this.reactionCount = 0,
     this.onTapAttachment,
     this.onLongPress,
+    this.quote,
+    this.attachment,
   });
 
   @override
@@ -53,6 +61,8 @@ class ChatBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (quote != null) ...[quote!, const SizedBox(height: 6)],
+                  if (attachment != null) ...[attachment!, if (body.isNotEmpty) const SizedBox(height: 6)],
                   if (attachedItem != null)
                     GestureDetector(
                       onTap: onTapAttachment,
