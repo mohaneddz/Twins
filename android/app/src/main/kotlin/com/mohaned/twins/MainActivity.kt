@@ -17,6 +17,10 @@ class MainActivity : FlutterActivity() {
     // screen to connect to the inviting twin's project.
     private var inviteLink: String? = null
 
+    // Switching the launcher alias closes whichever one the app is running
+    // under, so the picked colour waits until the app is in the background.
+    private var pendingLauncherColor: String? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "twins/invite")
@@ -31,7 +35,7 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "twins/appIcon")
             .setMethodCallHandler { call, result ->
                 if (call.method == "set") {
-                    setLauncherColor(call.argument<String>("color") ?: "miku")
+                    pendingLauncherColor = call.argument<String>("color") ?: "miku"
                     result.success(null)
                 } else {
                     result.notImplemented()
@@ -58,6 +62,12 @@ class MainActivity : FlutterActivity() {
         super.onCreate(savedInstanceState)
         reportShareUsage(intent)
         rememberInvite(intent)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        pendingLauncherColor?.let { setLauncherColor(it) }
+        pendingLauncherColor = null
     }
 
     override fun onNewIntent(intent: Intent) {

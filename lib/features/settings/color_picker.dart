@@ -47,7 +47,7 @@ class TwinColorPicker extends ConsumerWidget {
                   onTap: () async {
                     if (color == mine) return;
                     await ref.read(myColorProvider.notifier).set(color, ref.read(repositoryProvider));
-                    if (context.mounted) showTwinsToast(context, '${color.label} it is. The icon updates in a moment');
+                    if (context.mounted) showTwinsToast(context, '${color.label} it is. The icon changes once you leave the app');
                   },
                 ),
             ],
