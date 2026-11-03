@@ -4,6 +4,8 @@ Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (REA
 
 ## ✅ Done (2026-11-03)
 
+- **Each twin's colour** (`0020`) — Settings → Our colours: Miku (default), Sakura, Lavender, Sky or Peach. The whole app on that phone follows it, the launcher icon too (one `activity-alias` per colour), and the other twin sees your messages, quotes, plans, calendar dots, comments, avatars and the stripe under each saved card in your colour. If both pick the same one, the twin is shown in a stand-in so you never look alike.
+
 - **Shared calendar** (`0018`) — the second tab is now Calendar: a month grid (dots green for your plans, pink for your twin's), the picked day's plans and what's coming up. Plans have a time or all-day, an optional end, notes, a linked saved item (item details → Plan it) and a reminder (none / at the time / 10 min … 1 day; default in Settings → Calendar). Editing, sending to a chat and calling off live on the plan's page (`/event/:id`). Home shows the next three under "Coming up". Verified on the phone.
 - **Reminders on both phones** — each phone sets its own alarm from the calendar (`lib/notifications/plan_reminders.dart`, alarm-clock mode because realme batched plain exact alarms by up to an hour); the twin's phone sets its alarm straight from the "X planned something" push, even with the app closed. Verified the alarm is set exactly on the phone; the actual ring and the twin's side are untested.
 - **Chat replies** — swipe a message right (or long-press → Reply); the bubble quotes the original and tapping the quote scrolls to it. Long-press also has reactions, Copy text and Make it a plan. Verified on the phone.

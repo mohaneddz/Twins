@@ -202,6 +202,15 @@ psql "$SUPABASE_POOLER_CONNECTION_STRING" -v ON_ERROR_STOP=1 -f supabase/tests/p
   `nov 20th`, `8-11pm`, `in 2 hours`; add `!30m` / `!1h` / `!1d` for a
   reminder or `!no` for none.
 
+## Colours
+
+Each twin picks a colour in Settings → Our colours (`profiles.theme_color`,
+migration 0020; the list is `lib/theme/twin_color.dart`). It recolours the
+whole app on their phone and switches the launcher icon (an
+`activity-alias` per colour, toggled from `MainActivity`). Everything a twin
+makes (messages, plans, comments, saved items) is drawn in their colour on
+both phones.
+
 ## Folders, selection and settings
 
 - An item can be in **several folders** (`items.folder_ids`, migration 0015).
