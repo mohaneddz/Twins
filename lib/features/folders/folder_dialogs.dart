@@ -11,6 +11,7 @@ import '../../widgets/confirm_dialog.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/twins_bottom_sheet.dart';
 import '../../widgets/twins_input.dart';
+import '../../theme/palette.dart';
 
 const _folderEmojis = ['📁', '😂', '✨', '🌍', '📦', '📚', '💚', '🎬', '🍔', '🏡'];
 
@@ -40,7 +41,7 @@ Future<void> showCreateFolderSheet(
                       onTap: () => setState(() => selectedIcon = e),
                       child: CircleAvatar(
                         radius: 18,
-                        backgroundColor: selectedIcon == e ? TwinsColors.mikuGreen.withValues(alpha: 0.25) : Colors.transparent,
+                        backgroundColor: selectedIcon == e ? context.twins.accent.withValues(alpha: 0.25) : Colors.transparent,
                         child: Text(e, style: const TextStyle(fontSize: 18)),
                       ),
                     ))
@@ -159,9 +160,9 @@ Future<void> showAddToFolderSheet(
                     ),
                   ),
                   if (folders == null)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.all(TwinsSpacing.xl),
-                      child: CircularProgressIndicator(color: TwinsColors.mikuGreen),
+                      child: CircularProgressIndicator(color: context.twins.accent),
                     )
                   else
                     Flexible(
@@ -177,14 +178,14 @@ Future<void> showAddToFolderSheet(
                                 _ => null,
                               },
                               onChanged: (_) => toggle(folder),
-                              activeColor: TwinsColors.mikuGreen,
+                              activeColor: context.twins.accent,
                               controlAffinity: ListTileControlAffinity.trailing,
                               contentPadding: EdgeInsets.only(left: TwinsSpacing.md + depth * 20.0, right: TwinsSpacing.sm),
                               secondary: Text(folder.icon, style: const TextStyle(fontSize: 22)),
                               title: Text(folder.name),
                             ),
                           ListTile(
-                            leading: const Icon(Icons.add, color: TwinsColors.mikuGreen),
+                            leading: Icon(Icons.add, color: context.twins.accent),
                             title: const Text('New folder'),
                             onTap: () => showCreateFolderSheet(context, ref, spaceId: spaceId, parentId: null),
                           ),

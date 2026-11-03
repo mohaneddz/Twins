@@ -7,7 +7,6 @@ import '../../state/activity_provider.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
 import '../../theme/palette.dart';
-import '../../theme/colors.dart';
 import '../../theme/radius.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -98,13 +97,13 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(event.icon, color: TwinsColors.mikuGreen, size: 20),
+                          Icon(event.icon, color: context.twins.accent, size: 20),
                           const SizedBox(width: TwinsSpacing.sm),
                           Expanded(child: Text(event.text, style: TwinsTypography.body(Theme.of(context).colorScheme.onSurface, size: 14))),
                           Text(formatRelativeTime(event.time), style: TwinsTypography.label(context.twins.textSecondary, size: 11)),
                           if (event.isNew) ...[
                             const SizedBox(width: TwinsSpacing.xs),
-                            const CircleAvatar(radius: 4, backgroundColor: TwinsColors.mikuGreen),
+                            CircleAvatar(radius: 4, backgroundColor: context.twins.accent),
                           ],
                         ],
                       ),
@@ -113,11 +112,11 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                 },
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+            loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
             error: (e, _) => const SizedBox.shrink(),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
         error: (e, _) => const SizedBox.shrink(),
       ),
     );

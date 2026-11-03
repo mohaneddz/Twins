@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/palette.dart';
 import '../theme/colors.dart';
 import '../theme/radius.dart';
 
@@ -19,7 +20,7 @@ Future<bool> showConfirmDialog(
         TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
-          child: Text(confirmLabel, style: TextStyle(color: danger ? TwinsColors.danger : TwinsColors.mikuGreen)),
+          child: Text(confirmLabel, style: TextStyle(color: danger ? TwinsColors.danger : context.twins.accent)),
         ),
       ],
     ),

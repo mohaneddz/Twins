@@ -13,6 +13,7 @@ import '../../data/repositories/twins_repository.dart';
 import '../../notifications/push_notifications.dart';
 import '../../sharing/twin_invite.dart';
 import '../../state/ai_vision_provider.dart';
+import 'color_picker.dart';
 import 'deploy_functions_sheet.dart';
 import '../../state/chat_naming_provider.dart';
 import '../../state/greeting_provider.dart';
@@ -38,6 +39,9 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(TwinsSpacing.lg),
         children: [
+          const _SectionLabel('Our colours'),
+          const _SettingsGroup(children: [TwinColorPicker()]),
+          const SizedBox(height: TwinsSpacing.lg),
           const _SectionLabel('Account'),
           _SettingsGroup(children: [
             _SettingsTile(icon: PhosphorIconsRegular.userCircle, label: 'Edit profile', onTap: () => context.push('/settings/edit-profile')),

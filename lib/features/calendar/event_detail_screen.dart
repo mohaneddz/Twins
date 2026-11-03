@@ -33,7 +33,7 @@ class EventDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.twins;
     final space = ref.watch(currentSpaceProvider).valueOrNull;
-    if (space == null) return const Scaffold(body: Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)));
+    if (space == null) return Scaffold(body: Center(child: CircularProgressIndicator(color: context.twins.accent)));
     final eventsAsync = ref.watch(eventsProvider(space.id));
     final event = eventsAsync.valueOrNull?.where((e) => e.id == eventId).firstOrNull;
     final me = ref.watch(authStateProvider).valueOrNull;
@@ -42,14 +42,14 @@ class EventDetailScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(),
         body: eventsAsync.isLoading
-            ? const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen))
+            ? Center(child: CircularProgressIndicator(color: context.twins.accent))
             : const EmptyState(emoji: '🗓️', title: 'This plan is gone'),
       );
     }
 
     final members = ref.watch(spaceMembersProvider(space.id)).valueOrNull ?? const <Profile>[];
     final author = members.where((m) => m.id == event.createdBy).firstOrNull;
-    final accent = planAccent(event, me?.id);
+    final accent = planAccent(ref, event);
     final item = event.itemId == null ? null : ref.watch(itemByIdProvider(event.itemId!)).valueOrNull;
 
     Widget line(IconData icon, String text) => Padding(
@@ -171,7 +171,7 @@ Future<void> sharePlanToChat(BuildContext context, WidgetRef ref, TwinsEvent eve
         shrinkWrap: true,
         children: [
           ListTile(
-            leading: const Icon(PhosphorIconsBold.plusCircle, color: TwinsColors.mikuGreen),
+            leading: Icon(PhosphorIconsBold.plusCircle, color: context.twins.accent),
             title: const Text('New chat'),
             onTap: () async {
               final chat = await repo.createChat(spaceId: event.spaceId, name: event.title);

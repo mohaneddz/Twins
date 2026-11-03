@@ -4,7 +4,6 @@ import '../../data/models/user_settings.dart';
 import '../../state/auth_providers.dart';
 import '../../state/repository_provider.dart';
 import '../../theme/palette.dart';
-import '../../theme/colors.dart';
 import '../../theme/radius.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -51,7 +50,7 @@ class _NotificationsSettingsScreenState extends ConsumerState<NotificationsSetti
     return Scaffold(
       appBar: AppBar(title: const Text('Notifications')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen))
+          ? Center(child: CircularProgressIndicator(color: context.twins.accent))
           : Padding(
               padding: const EdgeInsets.all(TwinsSpacing.lg),
               child: Column(
@@ -66,7 +65,7 @@ class _NotificationsSettingsScreenState extends ConsumerState<NotificationsSetti
                       title: const Text('New activity'),
                       subtitle: const Text('New items, comments, and messages from your twin'),
                       value: _settings?.notificationsEnabled ?? true,
-                      activeThumbColor: TwinsColors.mikuGreen,
+                      activeThumbColor: context.twins.accent,
                       onChanged: _update,
                     ),
                   ),

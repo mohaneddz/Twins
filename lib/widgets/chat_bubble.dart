@@ -4,6 +4,7 @@ import '../theme/palette.dart';
 import '../theme/colors.dart';
 import '../theme/radius.dart';
 import '../theme/spacing.dart';
+import '../theme/twin_color.dart';
 import '../theme/typography.dart';
 import '../utils/formatters.dart';
 import 'item_card.dart';
@@ -24,6 +25,9 @@ class ChatBubble extends StatelessWidget {
   /// A plan card, drawn where an attached item would be.
   final Widget? attachment;
 
+  /// The sender's colour: the bubble is tinted with it.
+  final TwinColor? color;
+
   const ChatBubble({
     super.key,
     required this.body,
@@ -36,12 +40,14 @@ class ChatBubble extends StatelessWidget {
     this.onLongPress,
     this.quote,
     this.attachment,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = context.twins;
-    final bubbleColor = isMine ? TwinsColors.mikuMist : TwinsColors.folderPurple.withValues(alpha: 0.35);
+    final bubbleColor = color?.mist ?? (isMine ? palette.accentMist : TwinsColors.folderPurple.withValues(alpha: 0.35));
+    final labelColor = color?.accent ?? palette.accent;
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: GestureDetector(
@@ -52,7 +58,7 @@ class ChatBubble extends StatelessWidget {
             if (senderLabel != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 2, left: 4, right: 4),
-                child: Text(senderLabel!, style: TwinsTypography.label(TwinsColors.mikuGreen, size: 12)),
+                child: Text(senderLabel!, style: TwinsTypography.label(labelColor, size: 12)),
               ),
             Container(
               constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),

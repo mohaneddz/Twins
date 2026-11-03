@@ -10,6 +10,7 @@ import 'sharing/share_shortcut.dart';
 import 'state/auth_providers.dart';
 import 'state/repository_provider.dart';
 import 'state/theme_provider.dart';
+import 'state/twin_color_provider.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -80,11 +81,14 @@ class _TwinsAppState extends ConsumerState<TwinsApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final color = ref.watch(myColorProvider);
     ref.listen(currentSpaceProvider, (_, next) {
       final space = next.valueOrNull;
       if (space != null) {
         ShareShortcut.publish(space.name);
         PushNotifications.register(ref.read(repositoryProvider));
+        final me = ref.read(authStateProvider).valueOrNull;
+        if (me != null) ref.read(myColorProvider.notifier).syncWithProfile(me, ref.read(repositoryProvider));
       } else if (!next.isLoading) {
         ShareShortcut.remove();
       }
@@ -93,8 +97,8 @@ class _TwinsAppState extends ConsumerState<TwinsApp> {
     return MaterialApp.router(
       title: '¡Twins!',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.build(Brightness.light, color),
+      darkTheme: AppTheme.build(Brightness.dark, color),
       themeMode: themeMode,
       routerConfig: router,
     );

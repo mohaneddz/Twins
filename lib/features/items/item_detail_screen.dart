@@ -26,6 +26,7 @@ import '../../widgets/platform_badge.dart';
 import '../../widgets/reaction_bar.dart';
 import '../../widgets/toast.dart';
 import 'video_player_view.dart';
+import '../../theme/palette.dart';
 
 class ItemDetailScreen extends ConsumerStatefulWidget {
   final String itemId;
@@ -85,7 +86,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                     children: [
                       if (isMedia)
                         IconButton(
-                          icon: const Icon(PhosphorIconsBold.clock, color: TwinsColors.mikuGreen),
+                          icon: Icon(PhosphorIconsBold.clock, color: context.twins.accent),
                           tooltip: 'Comment at current timestamp',
                           onPressed: () {
                             final ms = _videoController?.value.position.inMilliseconds;
@@ -117,7 +118,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
         error: (e, _) => const Center(child: Text('Something went wrong.', style: TextStyle(color: Colors.white))),
       ),
     );
@@ -206,7 +207,7 @@ class _ItemDetailBody extends ConsumerWidget {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(PhosphorIconsFill.folder, color: TwinsColors.mikuGreen, size: 20),
+                                  Icon(PhosphorIconsFill.folder, color: context.twins.accent, size: 20),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -281,9 +282,9 @@ class _ItemDetailBody extends ConsumerWidget {
                               error: (e, _) => const SizedBox.shrink(),
                             );
                           },
-                          loading: () => const Padding(
+                          loading: () => Padding(
                             padding: EdgeInsets.all(TwinsSpacing.md),
-                            child: Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+                            child: Center(child: CircularProgressIndicator(color: context.twins.accent)),
                           ),
                           error: (e, _) => const SizedBox.shrink(),
                         ),
@@ -614,7 +615,7 @@ class _LinkRenderer extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(domain, style: TwinsTypography.label(TwinsColors.mikuGreen, size: 12)),
+                Text(domain, style: TwinsTypography.label(context.twins.accent, size: 12)),
                 const SizedBox(height: 4),
                 Text(item.title, style: TwinsTypography.heading(Colors.white, size: 16)),
                 if (item.description != null) ...[
@@ -666,7 +667,7 @@ class _SourceLine extends StatelessWidget {
               parts.join(' · '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TwinsTypography.label(TwinsColors.mikuGreen, size: 13),
+              style: TwinsTypography.label(context.twins.accent, size: 13),
             ),
           ),
         ],

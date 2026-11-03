@@ -10,6 +10,7 @@ import '../../theme/typography.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/twins_input.dart';
 import '../../widgets/twins_logo.dart';
+import '../../theme/palette.dart';
 
 enum _Step { connect, install, functions }
 
@@ -168,7 +169,7 @@ class _SupabaseSetupScreenState extends State<SupabaseSetupScreen> {
               },
               if (_progress != null) ...[
                 const SizedBox(height: TwinsSpacing.sm),
-                Text(_progress!, textAlign: TextAlign.center, style: TwinsTypography.body(TwinsColors.mikuLight, size: 13)),
+                Text(_progress!, textAlign: TextAlign.center, style: TwinsTypography.body(context.twins.accentLight, size: 13)),
               ],
               if (_error != null) ...[
                 const SizedBox(height: TwinsSpacing.sm),
@@ -275,7 +276,7 @@ class _SupabaseSetupScreenState extends State<SupabaseSetupScreen> {
 
   Widget _link(String text, String url) => TextButton(
         onPressed: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
-        child: Text(text, style: TwinsTypography.label(TwinsColors.mikuLight)),
+        child: Text(text, style: TwinsTypography.label(context.twins.accentLight)),
       );
 
   Widget _back() => TextButton(

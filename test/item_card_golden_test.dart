@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:twins/data/models/item.dart';
 import 'package:twins/data/models/item_type.dart';
 import 'package:twins/theme/app_theme.dart';
@@ -24,6 +26,8 @@ TwinsItem _item(String title, ItemType type, {int reactions = 0, int comments = 
 }
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   Widget harness(Brightness brightness) {
     return MaterialApp(
       theme: brightness == Brightness.dark ? AppTheme.dark : AppTheme.light,
@@ -73,7 +77,7 @@ void main() {
       tester.view.physicalSize = const Size(780, 1200);
       tester.view.devicePixelRatio = 2.0;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(harness(brightness));
+      await tester.pumpWidget(ProviderScope(child: harness(brightness)));
       await tester.pump(const Duration(milliseconds: 300));
       await expectLater(
         find.byType(Scaffold).first,

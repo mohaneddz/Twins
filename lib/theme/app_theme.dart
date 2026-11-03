@@ -3,17 +3,19 @@ import 'package:flutter/services.dart';
 import 'colors.dart';
 import 'palette.dart';
 import 'radius.dart';
+import 'twin_color.dart';
 import 'typography.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get light => _build(Brightness.light);
-  static ThemeData get dark => _build(Brightness.dark);
+  static ThemeData get light => build(Brightness.light);
+  static ThemeData get dark => build(Brightness.dark);
 
-  static ThemeData _build(Brightness brightness) {
+  static ThemeData build(Brightness brightness, [TwinColor color = TwinColor.miku]) {
     final isDark = brightness == Brightness.dark;
-    final palette = isDark ? TwinsPalette.dark : TwinsPalette.light;
+    final palette = (isDark ? TwinsPalette.dark : TwinsPalette.light).withColor(color, isDark: isDark);
+    final accent = color.accent;
     final bg = palette.bg;
     final surface = palette.surface;
     final textPrimary = palette.textPrimary;
@@ -22,7 +24,7 @@ class AppTheme {
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: TwinsColors.mikuGreen,
+      primary: accent,
       onPrimary: TwinsColors.white,
       secondary: TwinsColors.vibrantBlue,
       onSecondary: TwinsColors.white,
@@ -66,7 +68,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: TwinsRadius.lgRadius,
-          borderSide: const BorderSide(color: TwinsColors.mikuGreen, width: 1.6),
+          borderSide: BorderSide(color: accent, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: TwinsRadius.lgRadius,
@@ -76,7 +78,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: TwinsColors.mikuGreen,
+          backgroundColor: accent,
           foregroundColor: TwinsColors.white,
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(borderRadius: TwinsRadius.pillRadius),
@@ -86,17 +88,17 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: TwinsColors.mikuGreen,
+          foregroundColor: accent,
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(borderRadius: TwinsRadius.pillRadius),
-          side: const BorderSide(color: TwinsColors.mikuGreen, width: 1.4),
-          textStyle: TwinsTypography.heading(TwinsColors.mikuGreen, size: 17),
+          side: BorderSide(color: accent, width: 1.4),
+          textStyle: TwinsTypography.heading(accent, size: 17),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: TwinsColors.mikuGreen,
-          textStyle: TwinsTypography.label(TwinsColors.mikuGreen, size: 15),
+          foregroundColor: accent,
+          textStyle: TwinsTypography.label(accent, size: 15),
         ),
       ),
       cardTheme: CardThemeData(
@@ -129,7 +131,7 @@ class AppTheme {
         subtitleTextStyle: TwinsTypography.body(textSecondary, size: 13),
       ),
       iconTheme: IconThemeData(color: textSecondary),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(color: TwinsColors.mikuGreen),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: accent),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: isDark ? TwinsColors.darkSurfaceMuted : TwinsColors.navy,

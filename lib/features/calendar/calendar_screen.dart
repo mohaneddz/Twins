@@ -6,7 +6,6 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../data/models/event.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
-import '../../theme/colors.dart';
 import '../../theme/palette.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -51,8 +50,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     final palette = context.twins;
     final space = ref.watch(currentSpaceProvider).valueOrNull;
-    if (space == null) return const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen));
-    final myId = ref.watch(authStateProvider).valueOrNull?.id;
+    if (space == null) return Center(child: CircularProgressIndicator(color: context.twins.accent));
     final events = (ref.watch(eventsProvider(space.id)).valueOrNull ?? const <TwinsEvent>[])
         .where((e) => !e.isCancelled)
         .toList();
@@ -64,7 +62,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         heroTag: 'newPlan',
-        backgroundColor: TwinsColors.mikuGreen,
+        backgroundColor: context.twins.accent,
         foregroundColor: Colors.white,
         tooltip: 'New plan',
         onPressed: () => _newPlan(space.id, _selected),
@@ -111,7 +109,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 month: _month,
                 selected: _selected,
                 events: events,
-                myId: myId,
+                colorOf: (e) => planAccent(ref, e),
                 onSelect: (day) => setState(() {
                   _selected = day;
                   if (day.month != _month.month) _month = DateTime(day.year, day.month);
@@ -136,7 +134,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   padding: const EdgeInsets.only(bottom: TwinsSpacing.xs),
                   child: EventCard(
                     event: event,
-                    accent: planAccent(event, myId),
+                    accent: planAccent(ref, event),
                     onTap: () => context.push('/event/${event.id}'),
                   ),
                 ),
@@ -149,7 +147,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   padding: const EdgeInsets.only(bottom: TwinsSpacing.xs),
                   child: EventCard(
                     event: event,
-                    accent: planAccent(event, myId),
+                    accent: planAccent(ref, event),
                     onTap: () => context.push('/event/${event.id}'),
                   ),
                 ),
@@ -166,7 +164,7 @@ class MonthGrid extends StatelessWidget {
   final DateTime month;
   final DateTime selected;
   final List<TwinsEvent> events;
-  final String? myId;
+  final Color Function(TwinsEvent) colorOf;
   final ValueChanged<DateTime> onSelect;
   final ValueChanged<DateTime>? onLongPress;
 
@@ -175,7 +173,7 @@ class MonthGrid extends StatelessWidget {
     required this.month,
     required this.selected,
     required this.events,
-    required this.myId,
+    required this.colorOf,
     required this.onSelect,
     this.onLongPress,
   });
@@ -194,7 +192,7 @@ class MonthGrid extends StatelessWidget {
           inMonth: day.month == month.month,
           isToday: DateUtils.isSameDay(day, today),
           isSelected: DateUtils.isSameDay(day, selected),
-          dots: events.where((e) => e.occursOn(day)).take(3).map((e) => planAccent(e, myId)).toList(),
+          dots: events.where((e) => e.occursOn(day)).take(3).map(colorOf).toList(),
           onTap: onSelect,
           onLongPress: onLongPress,
         );
@@ -263,8 +261,8 @@ class _DayCell extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? TwinsColors.mikuGreen : null,
-                border: isToday && !isSelected ? Border.all(color: TwinsColors.mikuGreen, width: 1.5) : null,
+                color: isSelected ? context.twins.accent : null,
+                border: isToday && !isSelected ? Border.all(color: context.twins.accent, width: 1.5) : null,
               ),
               child: Text(
                 '${day.day}',

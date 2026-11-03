@@ -6,7 +6,6 @@ import '../../data/models/event.dart';
 import '../../state/data_providers.dart';
 import '../../state/plan_reminder_provider.dart';
 import '../../state/repository_provider.dart';
-import '../../theme/colors.dart';
 import '../../theme/palette.dart';
 import '../../theme/radius.dart';
 import '../../theme/spacing.dart';
@@ -184,7 +183,7 @@ class _EventEditorState extends ConsumerState<_EventEditor> {
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: TwinsColors.mikuGreen),
+              Icon(icon, size: 20, color: context.twins.accent),
               const SizedBox(width: TwinsSpacing.sm),
               Expanded(child: Text(label, style: TwinsTypography.body(palette.textPrimary))),
               ?trailing,
@@ -213,7 +212,7 @@ class _EventEditorState extends ConsumerState<_EventEditor> {
               onTap: () => setState(() => _allDay = !_allDay),
               trailing: Switch(
                 value: _allDay,
-                activeTrackColor: TwinsColors.mikuGreen,
+                activeTrackColor: context.twins.accent,
                 onChanged: (v) => setState(() => _allDay = v),
               ),
             ),
@@ -256,7 +255,7 @@ class _EventEditorState extends ConsumerState<_EventEditor> {
                 decoration: BoxDecoration(color: palette.surfaceMuted, borderRadius: TwinsRadius.smRadius),
                 child: Row(
                   children: [
-                    const Icon(PhosphorIconsBold.paperclip, size: 16, color: TwinsColors.mikuGreen),
+                    Icon(PhosphorIconsBold.paperclip, size: 16, color: context.twins.accent),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: TwinsTypography.body(palette.textPrimary, size: 13)),

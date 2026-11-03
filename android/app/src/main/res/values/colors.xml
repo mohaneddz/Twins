@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#00B3A4</color>
+    <!-- Launcher icon per twin colour (lib/theme/twin_color.dart). -->
+    <color name="ic_launcher_bg_sakura">#F06AB4</color>
+    <color name="ic_launcher_bg_lavender">#8E7CF0</color>
+    <color name="ic_launcher_bg_sky">#3D9BE9</color>
+    <color name="ic_launcher_bg_peach">#F08A4B</color>
 </resources>

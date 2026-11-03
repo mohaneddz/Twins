@@ -15,6 +15,7 @@ import '../../state/chat_naming_provider.dart';
 import '../../state/data_providers.dart';
 import '../../state/plan_reminder_provider.dart';
 import '../../state/repository_provider.dart';
+import '../../state/twin_color_provider.dart';
 import '../../theme/palette.dart';
 import '../../theme/colors.dart';
 import '../../theme/radius.dart';
@@ -166,12 +167,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                 senderLabel: nameOf(message.authorId),
                                 flash: _flashId == message.id,
                                 event: message.attachedEventId == null ? null : eventsById[message.attachedEventId],
-                                myId: me?.id,
                                 quote: message.replyToId == null
                                     ? null
                                     : _Quote(
                                         author: original == null ? '' : nameOf(original.authorId),
                                         text: original == null ? 'Message no longer here' : _snippet(original, eventsById),
+                                        color: ref.watch(colorOfUserProvider(original?.authorId)).accent,
                                         onTap: original == null ? null : () => _jumpTo(original.id),
                                       ),
                                 onLongPress: () => _showMessageActions(message, space.id),
@@ -180,7 +181,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           },
                         );
                       },
-                      loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+                      loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
                       error: (e, _) => const SizedBox.shrink(),
                     );
                   }),
@@ -199,7 +200,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(PhosphorIconsBold.plus, color: TwinsColors.mikuGreen),
+                        icon: Icon(PhosphorIconsBold.plus, color: context.twins.accent),
                         onPressed: () => _showAttachMenu(space.id),
                       ),
                       Expanded(
@@ -216,7 +217,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       ),
                       const SizedBox(width: TwinsSpacing.sm),
                       CircleAvatar(
-                        backgroundColor: TwinsColors.mikuGreen,
+                        backgroundColor: context.twins.accent,
                         child: IconButton(
                           icon: Icon(
                             parseCommand(_controller.text)?.command.takesText == true ? PhosphorIconsBold.calendarPlus : Icons.arrow_upward,
@@ -232,7 +233,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ],
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+          loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
           error: (e, _) => const SizedBox.shrink(),
         ),
       ),
@@ -260,7 +261,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 dense: true,
                 visualDensity: VisualDensity.compact,
                 title: Text.rich(TextSpan(children: [
-                  TextSpan(text: '/${c.name}', style: TwinsTypography.label(TwinsColors.mikuGreen, size: 14)),
+                  TextSpan(text: '/${c.name}', style: TwinsTypography.label(context.twins.accent, size: 14)),
                   if (c.takesText) TextSpan(text: '  ${c.example}', style: TwinsTypography.body(palette.textSecondary, size: 13)),
                 ])),
                 subtitle: Text(c.description, style: TwinsTypography.body(palette.textSecondary, size: 12)),
@@ -299,7 +300,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       }
       children.add(_ExtraBar(
         icon: plan == null ? PhosphorIconsBold.question : PhosphorIconsBold.calendarCheck,
-        color: plan == null ? palette.textSecondary : TwinsColors.mikuGreen,
+        color: plan == null ? palette.textSecondary : context.twins.accent,
         text: line,
       ));
     }
@@ -308,7 +309,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (replyTo != null) {
       children.add(_ExtraBar(
         icon: PhosphorIconsBold.arrowBendUpLeft,
-        color: TwinsColors.mikuGreen,
+        color: context.twins.accent,
         label: 'Replying to ${nameOf(replyTo.authorId) == 'You' ? 'yourself' : nameOf(replyTo.authorId)}',
         text: _snippet(replyTo, eventsById),
         onClose: () => setState(() => _replyTo = null),
@@ -439,7 +440,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _showPlans(String spaceId, String title, bool Function(TwinsEvent) where, {int? limit}) {
     var plans = _upcoming(spaceId).where(where).toList();
     if (limit != null) plans = plans.take(limit).toList();
-    final myId = ref.read(authStateProvider).valueOrNull?.id;
     return showTwinsBottomSheet<void>(
       context: context,
       title: title,
@@ -458,7 +458,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       padding: const EdgeInsets.only(bottom: TwinsSpacing.xs),
                       child: EventCard(
                         event: event,
-                        accent: planAccent(event, myId),
+                        accent: planAccent(ref, event),
                         onTap: () {
                           Navigator.of(context).pop();
                           context.push('/event/${event.id}');
@@ -473,7 +473,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Future<void> _cancelPlan(String spaceId) async {
     final plans = _upcoming(spaceId);
-    final myId = ref.read(authStateProvider).valueOrNull?.id;
     final picked = await showTwinsBottomSheet<TwinsEvent>(
       context: context,
       title: 'Call off which plan?',
@@ -490,7 +489,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   for (final event in plans)
                     Padding(
                       padding: const EdgeInsets.only(bottom: TwinsSpacing.xs),
-                      child: EventCard(event: event, accent: planAccent(event, myId), onTap: () => Navigator.of(context).pop(event)),
+                      child: EventCard(event: event, accent: planAccent(ref, event), onTap: () => Navigator.of(context).pop(event)),
                     ),
                 ],
               ),
@@ -518,7 +517,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: TwinsSpacing.sm),
               child: Text.rich(TextSpan(children: [
-                TextSpan(text: '/${c.name}', style: TwinsTypography.label(TwinsColors.mikuGreen, size: 14)),
+                TextSpan(text: '/${c.name}', style: TwinsTypography.label(context.twins.accent, size: 14)),
                 if (c.takesText) TextSpan(text: ' ${c.example}', style: TwinsTypography.body(palette.textSecondary, size: 13)),
                 TextSpan(text: '\n${c.description}', style: TwinsTypography.body(palette.textPrimary, size: 13.5)),
               ])),
@@ -607,19 +606,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(PhosphorIconsBold.calendarPlus, color: TwinsColors.mikuGreen),
+            leading: Icon(PhosphorIconsBold.calendarPlus, color: context.twins.accent),
             title: const Text('A plan'),
             subtitle: const Text('Put something on our calendar'),
             onTap: () => Navigator.of(context).pop(_AttachChoice.plan),
           ),
           ListTile(
-            leading: const Icon(PhosphorIconsBold.plusCircle, color: TwinsColors.mikuGreen),
+            leading: Icon(PhosphorIconsBold.plusCircle, color: context.twins.accent),
             title: const Text('New item'),
             subtitle: const Text('Save a link, photo, file, or note'),
             onTap: () => Navigator.of(context).pop(_AttachChoice.newItem),
           ),
           ListTile(
-            leading: const Icon(PhosphorIconsBold.stack, color: TwinsColors.mikuGreen),
+            leading: Icon(PhosphorIconsBold.stack, color: context.twins.accent),
             title: const Text('Existing item'),
             subtitle: const Text('Point to something already saved'),
             onTap: () => Navigator.of(context).pop(_AttachChoice.existingItem),
@@ -678,7 +677,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 },
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+            loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
             error: (e, _) => const EmptyState(emoji: '⚠️', title: "Couldn't load items"),
           );
         }),
@@ -750,9 +749,10 @@ class _ExtraBar extends StatelessWidget {
 class _Quote extends StatelessWidget {
   final String author;
   final String text;
+  final Color color;
   final VoidCallback? onTap;
 
-  const _Quote({required this.author, required this.text, this.onTap});
+  const _Quote({required this.author, required this.text, required this.color, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -763,12 +763,12 @@ class _Quote extends StatelessWidget {
         decoration: BoxDecoration(
           color: TwinsColors.navy.withValues(alpha: 0.06),
           borderRadius: TwinsRadius.smRadius,
-          border: const Border(left: BorderSide(color: TwinsColors.mikuGreen, width: 3)),
+          border: Border(left: BorderSide(color: color, width: 3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (author.isNotEmpty) Text(author, style: TwinsTypography.label(TwinsColors.mikuGreen, size: 11.5)),
+            if (author.isNotEmpty) Text(author, style: TwinsTypography.label(color, size: 11.5)),
             Text(
               text,
               maxLines: 2,
@@ -819,9 +819,9 @@ class _SwipeToReplyState extends State<_SwipeToReply> {
         children: [
           Opacity(
             opacity: progress,
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.only(left: 4),
-              child: Icon(PhosphorIconsBold.arrowBendUpLeft, size: 20, color: TwinsColors.mikuGreen),
+              child: Icon(PhosphorIconsBold.arrowBendUpLeft, size: 20, color: context.twins.accent),
             ),
           ),
           AnimatedContainer(
@@ -842,7 +842,6 @@ class _MessageBubble extends ConsumerWidget {
   final String senderLabel;
   final Widget? quote;
   final TwinsEvent? event;
-  final String? myId;
   final bool flash;
   final VoidCallback onLongPress;
 
@@ -853,7 +852,6 @@ class _MessageBubble extends ConsumerWidget {
     required this.onLongPress,
     this.quote,
     this.event,
-    this.myId,
     this.flash = false,
   });
 
@@ -869,7 +867,7 @@ class _MessageBubble extends ConsumerWidget {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: flash ? TwinsColors.mikuGreen.withValues(alpha: 0.12) : Colors.transparent,
+        color: flash ? context.twins.accent.withValues(alpha: 0.12) : Colors.transparent,
         borderRadius: TwinsRadius.mdRadius,
       ),
       child: ChatBubble(
@@ -878,6 +876,7 @@ class _MessageBubble extends ConsumerWidget {
         isMine: isMine,
         senderLabel: senderLabel,
         reactionCount: reactions.length,
+        color: ref.watch(colorOfUserProvider(message.authorId)),
         quote: quote,
         attachment: event == null
             ? null
@@ -885,7 +884,7 @@ class _MessageBubble extends ConsumerWidget {
                 width: 240,
                 child: EventCard(
                   event: event,
-                  accent: planAccent(event, myId),
+                  accent: planAccent(ref, event),
                   onTap: () => context.push('/event/${event.id}'),
                 ),
               ),

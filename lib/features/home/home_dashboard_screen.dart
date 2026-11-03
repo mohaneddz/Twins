@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../data/models/item.dart';
-import '../../state/auth_providers.dart' show authStateProvider, currentSpaceProvider;
+import '../../state/auth_providers.dart' show currentSpaceProvider;
 import '../../state/activity_provider.dart';
 import '../../state/data_providers.dart';
 import '../../state/greeting_provider.dart';
@@ -49,7 +49,6 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
   List<Widget> _comingUp(String spaceId) {
     final upcoming = ref.watch(upcomingEventsProvider(spaceId)).take(3).toList();
     if (upcoming.isEmpty) return const [];
-    final myId = ref.watch(authStateProvider).valueOrNull?.id;
     return [
       const SizedBox(height: TwinsSpacing.xl),
       Text('Coming up', style: TwinsTypography.heading(context.twins.textPrimary, size: 17)),
@@ -59,7 +58,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
           padding: const EdgeInsets.only(bottom: TwinsSpacing.xs),
           child: EventCard(
             event: event,
-            accent: planAccent(event, myId),
+            accent: planAccent(ref, event),
             compact: true,
             onTap: () => context.push('/event/${event.id}'),
           ),
@@ -96,11 +95,11 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
         body: spaceAsync.when(
           data: (space) {
             if (space == null) {
-              return const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen));
+              return Center(child: CircularProgressIndicator(color: context.twins.accent));
             }
             return SafeArea(
               child: RefreshIndicator(
-                color: TwinsColors.mikuGreen,
+                color: context.twins.accent,
                 onRefresh: () async => ref.invalidate(currentSpaceProvider),
                 child: ListView(
                   padding: const EdgeInsets.all(TwinsSpacing.lg),
@@ -137,7 +136,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                         Text('Folders', style: TwinsTypography.heading(palette.textPrimary, size: 17)),
                         GestureDetector(
                           onTap: () => context.push('/folders'),
-                          child: Text('See all', style: TwinsTypography.label(TwinsColors.mikuGreen)),
+                          child: Text('See all', style: TwinsTypography.label(context.twins.accent)),
                         ),
                       ],
                     ),
@@ -155,7 +154,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
                           Text('Everything', style: TwinsTypography.heading(palette.textPrimary, size: 17)),
                           GestureDetector(
                             onTap: () => context.push('/saved'),
-                            child: Text('See all', style: TwinsTypography.label(TwinsColors.mikuGreen)),
+                            child: Text('See all', style: TwinsTypography.label(context.twins.accent)),
                           ),
                         ],
                       ),
@@ -185,7 +184,7 @@ class _HomeDashboardScreenState extends ConsumerState<HomeDashboardScreen> {
               ),
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+          loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
           error: (e, _) => Center(child: Text('Something went wrong.', style: TwinsTypography.body(palette.textSecondary))),
         ),
       ),
@@ -309,9 +308,9 @@ class _RecentItemsStrip extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const SizedBox(
+      loading: () => SizedBox(
         height: 216,
-        child: Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+        child: Center(child: CircularProgressIndicator(color: context.twins.accent)),
       ),
       error: (e, _) => const SizedBox.shrink(),
     );

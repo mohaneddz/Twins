@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
-import '../../theme/colors.dart';
 import '../../theme/palette.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -67,7 +66,7 @@ class AllFoldersScreen extends ConsumerWidget {
             error: (e, _) => const SizedBox.shrink(),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
         error: (e, _) => const SizedBox.shrink(),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'colors.dart';
+import 'twin_color.dart';
 
 /// Semantic surface tokens for the current theme.
 ///
@@ -38,6 +39,13 @@ class TwinsPalette extends ThemeExtension<TwinsPalette> {
   /// Base colour for card drop shadows, already alpha-adjusted per theme.
   final Color shadow;
 
+  /// The colour this phone's twin picked (Miku green unless changed), and
+  /// its softer variants; see [TwinColor].
+  final Color accent;
+  final Color accentLight;
+  final Color accentMist;
+  final Color accentDeep;
+
   const TwinsPalette({
     required this.bg,
     required this.surface,
@@ -51,7 +59,21 @@ class TwinsPalette extends ThemeExtension<TwinsPalette> {
     required this.chipBg,
     required this.chipText,
     required this.shadow,
+    this.accent = TwinsColors.mikuGreen,
+    this.accentLight = TwinsColors.mikuLight,
+    this.accentMist = TwinsColors.mikuMist,
+    this.accentDeep = const Color(0xFF0E8F84),
   });
+
+  /// [light] or [dark], recoloured to the twin's pick.
+  TwinsPalette withColor(TwinColor color, {required bool isDark}) => copyWith(
+        accent: color.accent,
+        accentLight: color.light,
+        accentMist: color.mist,
+        accentDeep: color.deep,
+        chipBg: isDark ? null : color.mist,
+        chipText: isDark ? color.light : color.deep,
+      );
 
   static const light = TwinsPalette(
     bg: TwinsColors.lightBg,
@@ -97,6 +119,10 @@ class TwinsPalette extends ThemeExtension<TwinsPalette> {
     Color? chipBg,
     Color? chipText,
     Color? shadow,
+    Color? accent,
+    Color? accentLight,
+    Color? accentMist,
+    Color? accentDeep,
   }) {
     return TwinsPalette(
       bg: bg ?? this.bg,
@@ -111,6 +137,10 @@ class TwinsPalette extends ThemeExtension<TwinsPalette> {
       chipBg: chipBg ?? this.chipBg,
       chipText: chipText ?? this.chipText,
       shadow: shadow ?? this.shadow,
+      accent: accent ?? this.accent,
+      accentLight: accentLight ?? this.accentLight,
+      accentMist: accentMist ?? this.accentMist,
+      accentDeep: accentDeep ?? this.accentDeep,
     );
   }
 
@@ -130,6 +160,10 @@ class TwinsPalette extends ThemeExtension<TwinsPalette> {
       chipBg: Color.lerp(chipBg, other.chipBg, t)!,
       chipText: Color.lerp(chipText, other.chipText, t)!,
       shadow: Color.lerp(shadow, other.shadow, t)!,
+      accent: Color.lerp(accent, other.accent, t)!,
+      accentLight: Color.lerp(accentLight, other.accentLight, t)!,
+      accentMist: Color.lerp(accentMist, other.accentMist, t)!,
+      accentDeep: Color.lerp(accentDeep, other.accentDeep, t)!,
     );
   }
 }

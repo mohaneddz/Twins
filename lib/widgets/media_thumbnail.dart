@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../theme/palette.dart';
-import '../theme/colors.dart';
 
 /// Renders either a remote image (network/signed URL) or a local on-device
 /// file path. Mock mode (and any not-yet-uploaded preview) stores plain
@@ -33,7 +32,7 @@ class MediaThumbnail extends StatelessWidget {
 
   Widget _fallback(BuildContext context) {
     final palette = context.twins;
-    final color = fallbackColor ?? TwinsColors.mikuGreen;
+    final color = fallbackColor ?? context.twins.accent;
     final icon = fallbackIcon ?? Icons.image_outlined;
     return DecoratedBox(
       decoration: BoxDecoration(

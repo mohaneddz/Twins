@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-import '../../theme/colors.dart';
+import '../../theme/palette.dart';
 
 /// Native playback for uploaded/direct video via video_player + chewie,
 /// wired so external timestamp comments can seek it. Accepts either a
@@ -41,9 +41,9 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
           autoPlay: false,
           looping: false,
           materialProgressColors: ChewieProgressColors(
-            playedColor: TwinsColors.mikuGreen,
-            handleColor: TwinsColors.mikuGreen,
-            bufferedColor: TwinsColors.mikuLight.withValues(alpha: 0.4),
+            playedColor: context.twins.accent,
+            handleColor: context.twins.accent,
+            bufferedColor: context.twins.accentLight.withValues(alpha: 0.4),
           ),
         );
       });
@@ -69,9 +69,9 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       );
     }
     if (!_ready || _chewie == null) {
-      return const ColoredBox(
+      return ColoredBox(
         color: Colors.black,
-        child: Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+        child: Center(child: CircularProgressIndicator(color: context.twins.accent)),
       );
     }
     return AspectRatio(

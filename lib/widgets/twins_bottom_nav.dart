@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import '../theme/colors.dart';
 import '../theme/palette.dart';
 
 class TwinsBottomNav extends StatelessWidget {
@@ -26,7 +25,7 @@ class TwinsBottomNav extends StatelessWidget {
       return IconButton(
         onPressed: () => onTap(index),
         tooltip: label,
-        icon: Icon(active ? filled : outline, color: active ? TwinsColors.mikuGreen : inactive, size: 26),
+        icon: Icon(active ? filled : outline, color: active ? context.twins.accent : inactive, size: 26),
       );
     }
 
@@ -48,8 +47,8 @@ class TwinsBottomNav extends StatelessWidget {
                 child: Container(
                   width: 52,
                   height: 52,
-                  decoration: const BoxDecoration(
-                    color: TwinsColors.mikuGreen,
+                  decoration: BoxDecoration(
+                    color: context.twins.accent,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(color: Color(0x5900B3A4), blurRadius: 14, offset: Offset(0, 4)),

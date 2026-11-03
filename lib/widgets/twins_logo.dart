@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/colors.dart';
 import '../theme/palette.dart';
 import '../theme/typography.dart';
 
@@ -20,7 +19,7 @@ class TwinsLogo extends StatelessWidget {
       size: size,
       weight: FontWeight.w800,
     );
-    final accent = style.copyWith(color: TwinsColors.mikuGreen);
+    final accent = style.copyWith(color: context.twins.accent);
     return RichText(
       text: TextSpan(children: [
         TextSpan(text: '¡', style: accent),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../data/models/item.dart';
 import '../data/models/item_type.dart';
+import '../state/twin_color_provider.dart';
 import '../theme/palette.dart';
 import '../theme/colors.dart';
 import '../theme/radius.dart';
@@ -11,7 +13,8 @@ import 'media_thumbnail.dart';
 import 'platform_badge.dart';
 
 /// Grid card used in the dashboard "Recently added" strip and folder grids.
-class ItemCard extends StatelessWidget {
+/// A stripe along the bottom is the colour of the twin who saved it.
+class ItemCard extends ConsumerWidget {
   final TwinsItem item;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -20,9 +23,10 @@ class ItemCard extends StatelessWidget {
   const ItemCard({super.key, required this.item, this.onTap, this.onLongPress, this.selected = false});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.twins;
     final isNote = item.type == ItemType.note;
+    final ownerColor = ref.watch(colorOfUserProvider(item.createdBy)).accent;
 
     return InkWell(
       borderRadius: TwinsRadius.lgRadius,
@@ -40,7 +44,7 @@ class ItemCard extends StatelessWidget {
         foregroundDecoration: selected
             ? BoxDecoration(
                 borderRadius: TwinsRadius.lgRadius,
-                border: Border.all(color: TwinsColors.mikuGreen, width: 3),
+                border: Border.all(color: context.twins.accent, width: 3),
               )
             : null,
         clipBehavior: Clip.antiAlias,
@@ -107,6 +111,7 @@ class ItemCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                Container(height: 3, color: ownerColor),
               ],
             );
           },

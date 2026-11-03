@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../theme/palette.dart';
-import '../../theme/colors.dart';
 import '../../theme/radius.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -16,7 +15,7 @@ class PrivacyScreen extends ConsumerWidget {
     // The intro card below is a fixed light mint regardless of theme, so its
     // text needs a fixed dark foreground - not the theme's textPrimary,
     // which turns white in dark mode and disappears against the card.
-    final introCardFg = onColor(TwinsColors.mikuMist);
+    final introCardFg = onColor(context.twins.accentMist);
     return Scaffold(
       appBar: AppBar(title: const Text('Privacy')),
       body: ListView(
@@ -24,7 +23,7 @@ class PrivacyScreen extends ConsumerWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(TwinsSpacing.lg),
-            decoration: BoxDecoration(color: TwinsColors.mikuMist, borderRadius: TwinsRadius.lgRadius),
+            decoration: BoxDecoration(color: context.twins.accentMist, borderRadius: TwinsRadius.lgRadius),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

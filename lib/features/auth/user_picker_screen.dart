@@ -134,7 +134,7 @@ class _UserPickerScreenState extends ConsumerState<UserPickerScreen> {
                     const SizedBox(height: TwinsSpacing.xxl),
                     const TwinsLogo(size: 48),
                     const SizedBox(height: TwinsSpacing.sm),
-                    Text("Who's this? 💚", style: TwinsTypography.body(TwinsColors.mikuGreen, size: 16)),
+                    Text("Who's this? 💚", style: TwinsTypography.body(context.twins.accent, size: 16)),
                     const SizedBox(height: TwinsSpacing.xxl),
                     if (snapshot.hasError)
                       _loadError()
@@ -238,9 +238,9 @@ class _ProfileCard extends StatelessWidget {
             height: 88,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: twin == null ? null : const LinearGradient(colors: [TwinsColors.mikuLight, TwinsColors.vibrantBlue]),
+              gradient: twin == null ? null : LinearGradient(colors: [context.twins.accentLight, TwinsColors.vibrantBlue]),
               color: twin == null ? context.twins.textSecondary.withValues(alpha: 0.12) : null,
-              border: Border.all(color: selected ? TwinsColors.mikuGreen : Colors.transparent, width: 3),
+              border: Border.all(color: selected ? context.twins.accent : Colors.transparent, width: 3),
               image: avatarUrl == null
                   ? null
                   : DecorationImage(image: CachedNetworkImageProvider(avatarUrl), fit: BoxFit.cover),

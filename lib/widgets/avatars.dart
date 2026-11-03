@@ -1,10 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/profile.dart';
+import '../state/twin_color_provider.dart';
 import '../theme/colors.dart';
 
-class UserAvatar extends StatelessWidget {
+/// A twin's photo, or their initial on a gradient of their colour.
+class UserAvatar extends ConsumerWidget {
   final Profile profile;
   final double size;
   final Color? ringColor;
@@ -19,7 +22,8 @@ class UserAvatar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final color = ref.watch(colorOfUserProvider(profile.id));
     final initials = profile.displayName.isNotEmpty ? profile.displayName[0].toUpperCase() : '?';
     final avatarImage = _avatarImage;
     return Container(
@@ -28,8 +32,8 @@ class UserAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: ringColor != null ? Border.all(color: ringColor!, width: 2) : null,
-        gradient: const LinearGradient(
-          colors: [TwinsColors.mikuGreen, TwinsColors.vibrantBlue],
+        gradient: LinearGradient(
+          colors: [color.accent, color.light],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

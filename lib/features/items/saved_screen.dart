@@ -7,7 +7,6 @@ import '../../data/models/item.dart';
 import '../../data/models/item_type.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
-import '../../theme/colors.dart';
 import '../../theme/palette.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -82,7 +81,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                 },
               ),
         body: itemsAsync.isLoading && all.isEmpty
-            ? const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen))
+            ? Center(child: CircularProgressIndicator(color: context.twins.accent))
             : CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(

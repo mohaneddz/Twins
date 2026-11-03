@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import '../data/models/event.dart';
-import '../theme/colors.dart';
+import '../state/twin_color_provider.dart';
 import '../theme/palette.dart';
 import '../theme/radius.dart';
 import '../theme/spacing.dart';
@@ -11,10 +12,8 @@ import '../utils/formatters.dart';
 
 const _weekdayShort = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
-/// Colour of a plan: green for the ones I made, pink for my twin's, the same
-/// way the two of us are told apart elsewhere.
-Color planAccent(TwinsEvent event, String? myId) =>
-    event.createdBy == myId ? TwinsColors.mikuGreen : TwinsColors.sakuraPink;
+/// Colour of a plan: the colour of whichever twin made it.
+Color planAccent(WidgetRef ref, TwinsEvent event) => ref.watch(colorOfUserProvider(event.createdBy)).accent;
 
 /// A plan as a row: a date tile, the title and when. Used on the calendar,
 /// on home and as the card a /plan posts in chat.

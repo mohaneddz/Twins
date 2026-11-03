@@ -7,7 +7,6 @@ import '../../data/models/item_type.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
 import '../../state/repository_provider.dart';
-import '../../theme/colors.dart';
 import '../../theme/palette.dart';
 import '../../theme/radius.dart';
 import '../../theme/spacing.dart';
@@ -121,7 +120,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: TwinsRadius.pillRadius,
-                              borderSide: const BorderSide(color: TwinsColors.mikuGreen, width: 1.6),
+                              borderSide: BorderSide(color: context.twins.accent, width: 1.6),
                             ),
                           ),
                         ),

@@ -38,7 +38,7 @@ class ChatListScreen extends ConsumerWidget {
                   showBack: false,
                   actions: [
                     IconButton(
-                      icon: const Icon(PhosphorIconsBold.plus, color: TwinsColors.mikuGreen),
+                      icon: Icon(PhosphorIconsBold.plus, color: context.twins.accent),
                       onPressed: () => _createChat(context, ref, space.id),
                     ),
                   ],
@@ -71,14 +71,14 @@ class ChatListScreen extends ConsumerWidget {
                         },
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+                    loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
                     error: (e, _) => const SizedBox.shrink(),
                   ),
                 ),
               ],
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+          loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
           error: (e, _) => const SizedBox.shrink(),
         ),
       ),
@@ -167,8 +167,8 @@ class _ChatTile extends ConsumerWidget {
       onLongPress: onLongPress,
       leading: CircleAvatar(
         radius: 24,
-        backgroundColor: TwinsColors.mikuMist,
-        child: const Icon(PhosphorIconsBold.chatCircleDots, color: TwinsColors.mikuGreen),
+        backgroundColor: context.twins.accentMist,
+        child: Icon(PhosphorIconsBold.chatCircleDots, color: context.twins.accent),
       ),
       title: Text(
         chat.name ?? 'Untitled chat',

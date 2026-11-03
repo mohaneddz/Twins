@@ -7,7 +7,6 @@ import '../../data/models/profile.dart';
 import '../../sharing/twin_invite.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
-import '../../theme/colors.dart';
 import '../../theme/palette.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -43,7 +42,7 @@ class ProfileScreen extends ConsumerWidget {
             final twin = members.where((m) => m.id != myId).firstOrNull;
 
             return RefreshIndicator(
-              color: TwinsColors.mikuGreen,
+              color: context.twins.accent,
               onRefresh: () async {
                 ref.invalidate(spaceMembersProvider(space.id));
                 ref.invalidate(foldersProvider(FolderQuery(space.id, null)));
@@ -73,7 +72,7 @@ class ProfileScreen extends ConsumerWidget {
                       UserAvatar(profile: me, size: 96),
                       const SizedBox(height: TwinsSpacing.md),
                       Text(me.displayName, style: TwinsTypography.heading(palette.textPrimary, size: 24)),
-                      Text('@${me.username}', style: TwinsTypography.body(TwinsColors.mikuGreen)),
+                      Text('@${me.username}', style: TwinsTypography.body(context.twins.accent)),
                       if ((me.bio ?? '').isNotEmpty) ...[
                         const SizedBox(height: TwinsSpacing.xs),
                         Text(me.bio!, textAlign: TextAlign.center, style: TwinsTypography.body(palette.textSecondary)),
@@ -121,7 +120,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+          loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
           error: (e, _) => const SizedBox.shrink(),
         ),
       ),
@@ -182,7 +181,7 @@ class _TwinCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(twin.displayName, style: TwinsTypography.heading(palette.textPrimary, size: 17)),
-                      Text('@${twin.username}', style: TwinsTypography.body(TwinsColors.mikuGreen, size: 14)),
+                      Text('@${twin.username}', style: TwinsTypography.body(context.twins.accent, size: 14)),
                       const SizedBox(height: 4),
                       Text(
                         (twin.bio ?? '').isNotEmpty ? twin.bio! : 'No bio yet',

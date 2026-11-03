@@ -13,7 +13,7 @@ class SplashGate extends StatelessWidget {
 
   /// Matches `flutter_native_splash.color` / `.color_dark`.
   static Color background(BuildContext context) =>
-      context.isDark ? TwinsColors.navy : TwinsColors.mikuGreen;
+      context.isDark ? TwinsColors.navy : context.twins.accent;
 
   @override
   Widget build(BuildContext context) {

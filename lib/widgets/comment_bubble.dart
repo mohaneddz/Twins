@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/comment.dart';
 import '../data/models/profile.dart';
+import '../state/twin_color_provider.dart';
 import '../theme/palette.dart';
-import '../theme/colors.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
 import '../utils/formatters.dart';
 import 'avatars.dart';
 
-class CommentBubble extends StatelessWidget {
+class CommentBubble extends ConsumerWidget {
   final TwinsComment comment;
   final Profile author;
   final ValueChanged<int>? onTapTimestamp;
@@ -16,8 +17,9 @@ class CommentBubble extends StatelessWidget {
   const CommentBubble({super.key, required this.comment, required this.author, this.onTapTimestamp});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.twins;
+    final color = ref.watch(colorOfUserProvider(author.id)).accent;
     final secondary = palette.textSecondary;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: TwinsSpacing.xs),
@@ -32,7 +34,7 @@ class CommentBubble extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(author.displayName, style: TwinsTypography.label(palette.textPrimary)),
+                    Text(author.displayName, style: TwinsTypography.label(color)),
                     const SizedBox(width: 8),
                     if (comment.mediaTimestampMs != null)
                       GestureDetector(
@@ -40,12 +42,12 @@ class CommentBubble extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: TwinsColors.mikuGreen.withValues(alpha: 0.15),
+                            color: context.twins.accent.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             formatTimestamp(comment.mediaTimestampMs!),
-                            style: TwinsTypography.label(TwinsColors.mikuGreen, size: 11),
+                            style: TwinsTypography.label(context.twins.accent, size: 11),
                           ),
                         ),
                       ),
@@ -91,7 +93,7 @@ class CommentComposer extends StatelessWidget {
               child: Chip(
                 label: Text('at $timestampLabel'),
                 onDeleted: onClearTimestamp,
-                backgroundColor: TwinsColors.mikuGreen.withValues(alpha: 0.15),
+                backgroundColor: context.twins.accent.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -107,7 +109,7 @@ class CommentComposer extends StatelessWidget {
             ),
             const SizedBox(width: TwinsSpacing.sm),
             CircleAvatar(
-              backgroundColor: TwinsColors.mikuGreen,
+              backgroundColor: context.twins.accent,
               child: IconButton(
                 icon: const Icon(Icons.arrow_upward, color: Colors.white, size: 20),
                 onPressed: onSend,

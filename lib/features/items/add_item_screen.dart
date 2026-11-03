@@ -103,7 +103,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
       children: [
         Row(
           children: [
-            const Icon(PhosphorIconsFill.sparkle, size: 15, color: TwinsColors.mikuGreen),
+            Icon(PhosphorIconsFill.sparkle, size: 15, color: context.twins.accent),
             const SizedBox(width: 6),
             Text('Tags', style: TwinsTypography.label(context.twins.textSecondary)),
             const SizedBox(width: 8),
@@ -115,7 +115,7 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
                 borderRadius: BorderRadius.circular(20),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  child: Text('Suggest', style: TwinsTypography.label(TwinsColors.mikuGreen, size: 12)),
+                  child: Text('Suggest', style: TwinsTypography.label(context.twins.accent, size: 12)),
                 ),
               ),
           ],
@@ -400,15 +400,15 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           else
             Container(
               padding: const EdgeInsets.all(TwinsSpacing.md),
-              decoration: BoxDecoration(color: TwinsColors.mikuMist, borderRadius: TwinsRadius.mdRadius),
+              decoration: BoxDecoration(color: context.twins.accentMist, borderRadius: TwinsRadius.mdRadius),
               child: Row(children: [
-                const Icon(PhosphorIconsFill.checkCircle, color: TwinsColors.mikuGreen),
+                Icon(PhosphorIconsFill.checkCircle, color: context.twins.accent),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _pickedFileName ?? 'File selected',
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: onColor(TwinsColors.mikuMist)),
+                    style: TextStyle(color: onColor(context.twins.accentMist)),
                   ),
                 ),
               ]),
@@ -423,8 +423,8 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           if (_saving) ...[
             LinearProgressIndicator(
               value: _uploadProgress,
-              backgroundColor: TwinsColors.mikuMist,
-              color: TwinsColors.mikuGreen,
+              backgroundColor: context.twins.accentMist,
+              color: context.twins.accent,
             ),
             const SizedBox(height: TwinsSpacing.sm),
             Text('Uploading...', style: TwinsTypography.body(context.twins.textSecondary, size: 13)),
@@ -450,15 +450,15 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           else
             Container(
               padding: const EdgeInsets.all(TwinsSpacing.md),
-              decoration: BoxDecoration(color: TwinsColors.mikuMist, borderRadius: TwinsRadius.mdRadius),
+              decoration: BoxDecoration(color: context.twins.accentMist, borderRadius: TwinsRadius.mdRadius),
               child: Row(children: [
-                const Icon(PhosphorIconsFill.fileText, color: TwinsColors.mikuGreen),
+                Icon(PhosphorIconsFill.fileText, color: context.twins.accent),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _pickedFileName ?? 'Document selected',
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: onColor(TwinsColors.mikuMist)),
+                    style: TextStyle(color: onColor(context.twins.accentMist)),
                   ),
                 ),
               ]),
@@ -473,8 +473,8 @@ class _AddItemScreenState extends ConsumerState<AddItemScreen> {
           if (_saving) ...[
             LinearProgressIndicator(
               value: _uploadProgress,
-              backgroundColor: TwinsColors.mikuMist,
-              color: TwinsColors.mikuGreen,
+              backgroundColor: context.twins.accentMist,
+              color: context.twins.accent,
             ),
             const SizedBox(height: TwinsSpacing.sm),
             Text('Uploading...', style: TwinsTypography.body(context.twins.textSecondary, size: 13)),
@@ -671,7 +671,7 @@ class _MenuOption extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: TwinsColors.mikuGreen, size: 28),
+            Icon(icon, color: context.twins.accent, size: 28),
             const SizedBox(width: TwinsSpacing.md),
             Expanded(
               child: Column(

@@ -1,6 +1,8 @@
 package com.mohaned.twins
 
+import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.core.app.Person
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -22,6 +24,15 @@ class MainActivity : FlutterActivity() {
                 if (call.method == "takeLink") {
                     result.success(inviteLink)
                     inviteLink = null
+                } else {
+                    result.notImplemented()
+                }
+            }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "twins/appIcon")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "set") {
+                    setLauncherColor(call.argument<String>("color") ?: "miku")
+                    result.success(null)
                 } else {
                     result.notImplemented()
                 }
@@ -60,6 +71,19 @@ class MainActivity : FlutterActivity() {
         if (intent.action == Intent.ACTION_VIEW && data.scheme == "twins") inviteLink = data.toString()
     }
 
+    // Turns on the launcher alias for the picked colour and off the rest.
+    // The launcher may take a few seconds to redraw the icon.
+    private fun setLauncherColor(color: String) {
+        val wanted = color.replaceFirstChar { it.uppercase() }.takeIf { it in LAUNCHER_COLORS } ?: "Miku"
+        for (name in LAUNCHER_COLORS) {
+            val state = if (name == wanted) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            val component = ComponentName(this, "$packageName.Launcher$name")
+            if (packageManager.getComponentEnabledSetting(component) == state) continue
+            packageManager.setComponentEnabledSetting(component, state, PackageManager.DONT_KILL_APP)
+        }
+    }
+
     // A long-lived shortcut with a Person is what Android ranks into the
     // share sheet's top row; one per device is enough since a user only
     // ever belongs to one space.
@@ -87,5 +111,6 @@ class MainActivity : FlutterActivity() {
     private companion object {
         const val SHORTCUT_ID = "twinsSpace"
         const val SHARE_CATEGORY = "com.mohaned.twins.category.SHARE_TARGET"
+        val LAUNCHER_COLORS = listOf("Miku", "Sakura", "Lavender", "Sky", "Peach")
     }
 }

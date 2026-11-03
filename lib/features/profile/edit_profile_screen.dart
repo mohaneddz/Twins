@@ -11,6 +11,7 @@ import '../../widgets/buttons.dart';
 import '../../widgets/screen_header.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/twins_input.dart';
+import '../../theme/palette.dart';
 
 /// Users can only edit their own display name/username/bio - never their
 /// twin's fields, per spec section 20.
@@ -87,7 +88,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             right: 0,
                             child: Container(
                               padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(color: TwinsColors.mikuGreen, shape: BoxShape.circle),
+                              decoration: BoxDecoration(color: context.twins.accent, shape: BoxShape.circle),
                               child: const Icon(Icons.edit, size: 16, color: Colors.white),
                             ),
                           ),

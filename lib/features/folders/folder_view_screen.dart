@@ -6,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 import '../../data/models/item_type.dart';
 import '../../state/auth_providers.dart';
 import '../../state/data_providers.dart';
-import '../../theme/colors.dart';
 import '../../theme/palette.dart';
 import '../../theme/spacing.dart';
 import '../../theme/typography.dart';
@@ -49,7 +48,7 @@ class _FolderViewScreenState extends ConsumerState<FolderViewScreen> {
 
     // The header takes the folder's own colour (it was pinned to brand green
     // regardless of the folder), so the chrome has to derive its contrast.
-    final headerColor = folderAsync.valueOrNull?.color ?? TwinsColors.mikuGreen;
+    final headerColor = folderAsync.valueOrNull?.color ?? context.twins.accent;
     final onHeader = onColor(headerColor);
     final onHeaderMuted = onHeader.withValues(alpha: 0.7);
 
@@ -152,7 +151,7 @@ class _FolderViewScreenState extends ConsumerState<FolderViewScreen> {
                       }),
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+                  loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
                   error: (e, _) => const SizedBox.shrink(),
                 ),
               ),
@@ -163,7 +162,7 @@ class _FolderViewScreenState extends ConsumerState<FolderViewScreen> {
       floatingActionButton: _selecting
           ? null
           : FloatingActionButton(
-              backgroundColor: TwinsColors.mikuGreen,
+              backgroundColor: context.twins.accent,
               onPressed: () => context.push('/add', extra: {'folderId': widget.folderId}),
               child: const Icon(Icons.add, color: Colors.white),
             ),
@@ -281,7 +280,7 @@ class _FolderContent extends ConsumerWidget {
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator(color: TwinsColors.mikuGreen)),
+              loading: () => Center(child: CircularProgressIndicator(color: context.twins.accent)),
               error: (e, _) => const SizedBox.shrink(),
             ),
             loading: () => const SizedBox.shrink(),

@@ -8,6 +8,7 @@ import '../../widgets/buttons.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/twins_bottom_sheet.dart';
 import '../../widgets/twins_input.dart';
+import '../../theme/palette.dart';
 
 /// Re-deploys the bundled edge functions (link previews, AI tags, chat
 /// naming) to this project - needed after an app update changes them.
@@ -36,7 +37,7 @@ Future<void> showDeployFunctionsSheet(BuildContext context) async {
           TwinsInput(hint: 'Groq API key (optional)', controller: groq),
           if (progress != null || error != null) ...[
             const SizedBox(height: TwinsSpacing.sm),
-            Text(error ?? progress!, style: TextStyle(color: error != null ? TwinsColors.danger : TwinsColors.mikuGreen, fontSize: 13)),
+            Text(error ?? progress!, style: TextStyle(color: error != null ? TwinsColors.danger : context.twins.accent, fontSize: 13)),
           ],
           const SizedBox(height: TwinsSpacing.md),
           PrimaryButton(
