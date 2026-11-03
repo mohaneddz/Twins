@@ -6,6 +6,7 @@ class TwinsMessage {
   final String body;
   final String? replyToId;
   final String? attachedItemId;
+  final String? attachedEventId;
   final DateTime createdAt;
 
   const TwinsMessage({
@@ -16,6 +17,7 @@ class TwinsMessage {
     required this.body,
     this.replyToId,
     this.attachedItemId,
+    this.attachedEventId,
     required this.createdAt,
   });
 
@@ -27,6 +29,7 @@ class TwinsMessage {
         body: json['body'] as String,
         replyToId: json['reply_to_id'] as String?,
         attachedItemId: json['attached_item_id'] as String?,
+        attachedEventId: json['attached_event_id'] as String?,
         createdAt: DateTime.parse(json['created_at'] as String),
       );
 
@@ -36,5 +39,6 @@ class TwinsMessage {
         'body': body,
         'reply_to_id': replyToId,
         'attached_item_id': attachedItemId,
+        'attached_event_id': attachedEventId,
       };
 }

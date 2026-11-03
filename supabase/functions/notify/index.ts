@@ -35,6 +35,27 @@ async function first<T>(path: string): Promise<T | null> {
   return rows[0] ?? null;
 }
 
+type EventRow = {
+  space_id: string;
+  title: string;
+  starts_at: string;
+  all_day: boolean;
+  remind_minutes: number | null;
+  cancelled_at: string | null;
+};
+
+const EVENT_KINDS = ["event", "event_update", "event_cancel"];
+
+// The plan's time in the sender's clock; the twins share a timezone, and the
+// server's own is UTC.
+function formatWhen(event: EventRow, tzOffsetMinutes: number): string {
+  const local = new Date(new Date(event.starts_at).getTime() + tzOffsetMinutes * 60_000);
+  const day = local.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  if (event.all_day) return day;
+  const time = local.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" });
+  return `${day}, ${time}`;
+}
+
 function truncate(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
@@ -52,15 +73,43 @@ serve(async (req) => {
     if (!userRes.ok) return json({ error: "Unauthorized" }, 401);
     const senderId = (await userRes.json()).id as string;
 
-    const { kind, id } = await req.json();
-    if ((kind !== "item" && kind !== "message") || typeof id !== "string") return json({ error: "Expected kind and id" }, 400);
+    const { kind, id, tzOffsetMinutes } = await req.json();
+    if ((kind !== "item" && kind !== "message" && !EVENT_KINDS.includes(kind)) || typeof id !== "string") {
+      return json({ error: "Expected kind and id" }, 400);
+    }
+    const offset = typeof tzOffsetMinutes === "number" && Math.abs(tzOffsetMinutes) <= 14 * 60 ? tzOffsetMinutes : 0;
 
     let spaceId: string;
     let body: string;
     let route: string;
     let collapse: string;
     let titleSuffix = "";
-    if (kind === "item") {
+    let data: Record<string, string> | undefined;
+    if (EVENT_KINDS.includes(kind)) {
+      const event = await first<EventRow>(
+        `events?id=eq.${encodeURIComponent(id)}&select=space_id,title,starts_at,all_day,remind_minutes,cancelled_at`,
+      );
+      if (!event) return json({ error: "No such plan" }, 404);
+      const member = await first<{ user_id: string }>(
+        `space_members?space_id=eq.${event.space_id}&user_id=eq.${senderId}&select=user_id`,
+      );
+      if (!member) return json({ error: "Not your plan" }, 403);
+      spaceId = event.space_id;
+      body = `${truncate(event.title, 100)} · ${formatWhen(event, offset)}`;
+      route = `/event/${id}`;
+      collapse = `event-${id}`;
+      titleSuffix = kind === "event" ? " planned something" : kind === "event_update" ? " changed a plan" : " called off a plan";
+      // Lets the twin's phone set (or drop) its reminder straight away.
+      data = {
+        kind: "event",
+        event_id: id,
+        title: event.title,
+        starts_at: event.starts_at,
+        all_day: String(event.all_day),
+        remind_minutes: event.remind_minutes === null ? "" : String(event.remind_minutes),
+        cancelled: String(event.cancelled_at !== null),
+      };
+    } else if (kind === "item") {
       const item = await first<{ space_id: string; created_by: string; title: string }>(
         `items?id=eq.${encodeURIComponent(id)}&select=space_id,created_by,title`,
       );
@@ -71,10 +120,12 @@ serve(async (req) => {
       collapse = "new-items";
       titleSuffix = " saved something";
     } else {
-      const message = await first<{ space_id: string; author_id: string; chat_id: string; body: string | null }>(
-        `messages?id=eq.${encodeURIComponent(id)}&select=space_id,author_id,chat_id,body`,
+      const message = await first<{ space_id: string; author_id: string; chat_id: string; body: string | null; attached_event_id: string | null }>(
+        `messages?id=eq.${encodeURIComponent(id)}&select=space_id,author_id,chat_id,body,attached_event_id`,
       );
       if (!message || message.author_id !== senderId) return json({ error: "Not your message" }, 403);
+      // A plan card: the plan's own notification already went out.
+      if (message.attached_event_id && !message.body) return json({ sent: 0, skipped: "plan card" });
       spaceId = message.space_id;
       body = message.body ? truncate(message.body, 200) : "Shared an item";
       route = `/chat/${message.chat_id}`;
@@ -98,7 +149,7 @@ serve(async (req) => {
     const relayRes = await fetch(relayUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-twins-relay-key": relayKey },
-      body: JSON.stringify({ tokens: tokens.slice(0, 10), title: `${sender?.display_name ?? "Your twin"}${titleSuffix}`, body, route, collapse }),
+      body: JSON.stringify({ tokens: tokens.slice(0, 10), title: `${sender?.display_name ?? "Your twin"}${titleSuffix}`, body, route, collapse, data }),
     });
     if (!relayRes.ok) return json({ error: `relay ${relayRes.status}` }, 502);
     const result = await relayRes.json() as { sent: number; invalid: string[] };

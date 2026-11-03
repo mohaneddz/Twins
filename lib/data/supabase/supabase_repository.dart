@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/chat.dart';
 import '../models/comment.dart';
+import '../models/event.dart';
 import '../models/folder.dart';
 import '../models/item.dart';
 import '../models/item_type.dart';
@@ -121,7 +122,7 @@ class SupabaseTwinsRepository implements TwinsRepository {
   /// Best-effort and not awaited: a missing function or relay must never
   /// slow down or fail the save itself.
   void _notifyTwin(String kind, String id) {
-    supa.functions.invoke('notify', body: {'kind': kind, 'id': id}).catchError((_) => FunctionResponse(status: 0));
+    supa.functions.invoke('notify', body: {'kind': kind, 'id': id, 'tzOffsetMinutes': DateTime.now().timeZoneOffset.inMinutes}).catchError((_) => FunctionResponse(status: 0));
   }
 
 
@@ -509,6 +510,8 @@ class SupabaseTwinsRepository implements TwinsRepository {
     required String chatId,
     required String body,
     String? attachedItemId,
+    String? attachedEventId,
+    String? replyToId,
   }) async {
     // Runs as a security-definer RPC - see migration 0013's header comment
     // (same RLS-on-INSERT bug as createSpace/createInvite in 0012). Also
@@ -519,6 +522,8 @@ class SupabaseTwinsRepository implements TwinsRepository {
       'p_chat_id': chatId,
       'p_body': body,
       'p_attached_item_id': attachedItemId,
+      'p_reply_to_id': replyToId,
+      'p_attached_event_id': attachedEventId,
     }) as Map<String, dynamic>;
     final sent = TwinsMessage.fromJson(row);
     _notifyTwin('message', sent.id);
@@ -531,6 +536,54 @@ class SupabaseTwinsRepository implements TwinsRepository {
       final sorted = rows.map(TwinsMessage.fromJson).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return sorted.take(limit).toList();
     });
+  }
+
+  // ---- Calendar ----
+  @override
+  Stream<List<TwinsEvent>> watchEvents(String spaceId) {
+    return supa.from('events').stream(primaryKey: ['id']).eq('space_id', spaceId).map(
+        (rows) => rows.map(TwinsEvent.fromJson).toList()..sort((a, b) => a.startsAt.compareTo(b.startsAt)));
+  }
+
+  @override
+  Future<TwinsEvent> createEvent({
+    required String spaceId,
+    required String title,
+    required DateTime startsAt,
+    DateTime? endsAt,
+    bool allDay = false,
+    int? remindMinutes,
+    String? notes,
+    String? itemId,
+    String? chatId,
+  }) async {
+    final row = await supa.rpc('create_event', params: {
+      'p_space_id': spaceId,
+      'p_title': title,
+      'p_starts_at': startsAt.toUtc().toIso8601String(),
+      'p_ends_at': endsAt?.toUtc().toIso8601String(),
+      'p_all_day': allDay,
+      'p_remind_minutes': remindMinutes,
+      'p_notes': notes,
+      'p_item_id': itemId,
+      'p_chat_id': chatId,
+    }) as Map<String, dynamic>;
+    final event = TwinsEvent.fromJson(row);
+    _notifyTwin('event', event.id);
+    return event;
+  }
+
+  @override
+  Future<TwinsEvent> updateEvent(TwinsEvent event) async {
+    final row = await supa.from('events').update(event.toJson()).eq('id', event.id).select().single();
+    _notifyTwin('event_update', event.id);
+    return TwinsEvent.fromJson(row);
+  }
+
+  @override
+  Future<void> cancelEvent(String eventId) async {
+    await supa.from('events').update({'cancelled_at': DateTime.now().toUtc().toIso8601String()}).eq('id', eventId);
+    _notifyTwin('event_cancel', eventId);
   }
 
   // ---- Reactions ----

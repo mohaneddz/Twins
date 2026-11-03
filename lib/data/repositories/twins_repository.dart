@@ -1,5 +1,6 @@
 import '../models/chat.dart';
 import '../models/comment.dart';
+import '../models/event.dart';
 import '../models/folder.dart';
 import '../models/item.dart';
 import '../models/item_type.dart';
@@ -137,11 +138,36 @@ abstract class TwinsRepository {
 
   // ---- Messages ----
   Stream<List<TwinsMessage>> watchMessages(String chatId);
-  Future<TwinsMessage> sendMessage({required String spaceId, required String chatId, required String body, String? attachedItemId});
+  Future<TwinsMessage> sendMessage({
+    required String spaceId,
+    required String chatId,
+    required String body,
+    String? attachedItemId,
+    String? attachedEventId,
+    String? replyToId,
+  });
 
   /// Most recent messages across every chat in the space - used by the
   /// space-wide activity feed rather than a single thread's view.
   Stream<List<TwinsMessage>> watchRecentMessages(String spaceId, {int limit = 15});
+
+  // ---- Calendar ----
+  /// Every plan in the space, cancelled ones included (so a reminder for one
+  /// can be dropped), soonest first.
+  Stream<List<TwinsEvent>> watchEvents(String spaceId);
+  Future<TwinsEvent> createEvent({
+    required String spaceId,
+    required String title,
+    required DateTime startsAt,
+    DateTime? endsAt,
+    bool allDay = false,
+    int? remindMinutes,
+    String? notes,
+    String? itemId,
+    String? chatId,
+  });
+  Future<TwinsEvent> updateEvent(TwinsEvent event);
+  Future<void> cancelEvent(String eventId);
 
   // ---- Reactions ----
   Stream<List<TwinsReaction>> watchReactions(String spaceId, ReactionTargetType type, String targetId);

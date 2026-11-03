@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/chat.dart';
 import '../models/comment.dart';
+import '../models/event.dart';
 import '../models/folder.dart';
 import '../models/item.dart';
 import '../models/item_type.dart';
@@ -43,6 +44,7 @@ class MockTwinsRepository implements TwinsRepository {
   late List<TwinsChat> _chats;
   late List<TwinsMessage> _messages;
   late List<TwinsReaction> _reactions;
+  final List<TwinsEvent> _events = [];
 
   final _authController = StreamController<Profile?>.broadcast();
   final _foldersController = StreamController<void>.broadcast();
@@ -52,6 +54,7 @@ class MockTwinsRepository implements TwinsRepository {
   final _messagesController = StreamController<void>.broadcast();
   final _reactionsController = StreamController<void>.broadcast();
   final _tagsController = StreamController<void>.broadcast();
+  final _eventsController = StreamController<void>.broadcast();
 
   final Map<String, TwinsUserSettings> _settings = {};
 
@@ -587,6 +590,8 @@ class MockTwinsRepository implements TwinsRepository {
     required String chatId,
     required String body,
     String? attachedItemId,
+    String? attachedEventId,
+    String? replyToId,
   }) async {
     await _delay(ms: 120);
     final message = TwinsMessage(
@@ -596,6 +601,8 @@ class MockTwinsRepository implements TwinsRepository {
       authorId: _authed?.id ?? MockSeed.meId,
       body: body,
       attachedItemId: attachedItemId,
+      attachedEventId: attachedEventId,
+      replyToId: replyToId,
       createdAt: DateTime.now(),
     );
     _messages.add(message);
@@ -622,6 +629,68 @@ class MockTwinsRepository implements TwinsRepository {
     await for (final _ in _messagesController.stream) {
       yield recent();
     }
+  }
+
+  // ---- Calendar ----
+  @override
+  Stream<List<TwinsEvent>> watchEvents(String spaceId) async* {
+    List<TwinsEvent> forSpace() =>
+        _events.where((e) => e.spaceId == spaceId).toList()..sort((a, b) => a.startsAt.compareTo(b.startsAt));
+
+    yield forSpace();
+    await for (final _ in _eventsController.stream) {
+      yield forSpace();
+    }
+  }
+
+  @override
+  Future<TwinsEvent> createEvent({
+    required String spaceId,
+    required String title,
+    required DateTime startsAt,
+    DateTime? endsAt,
+    bool allDay = false,
+    int? remindMinutes,
+    String? notes,
+    String? itemId,
+    String? chatId,
+  }) async {
+    await _delay(ms: 120);
+    final now = DateTime.now();
+    final event = TwinsEvent(
+      id: _uuid.v4(),
+      spaceId: spaceId,
+      createdBy: _authed?.id ?? MockSeed.meId,
+      title: title,
+      notes: notes,
+      startsAt: startsAt,
+      endsAt: endsAt,
+      allDay: allDay,
+      remindMinutes: remindMinutes,
+      itemId: itemId,
+      chatId: chatId,
+      createdAt: now,
+      updatedAt: now,
+    );
+    _events.add(event);
+    _eventsController.add(null);
+    return event;
+  }
+
+  @override
+  Future<TwinsEvent> updateEvent(TwinsEvent event) async {
+    await _delay(ms: 120);
+    final index = _events.indexWhere((e) => e.id == event.id);
+    if (index != -1) _events[index] = event;
+    _eventsController.add(null);
+    return event;
+  }
+
+  @override
+  Future<void> cancelEvent(String eventId) async {
+    final index = _events.indexWhere((e) => e.id == eventId);
+    if (index != -1) _events[index] = _events[index].copyWith(cancelledAt: DateTime.now());
+    _eventsController.add(null);
   }
 
   // ---- Reactions ----

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/chat.dart';
 import '../data/models/comment.dart';
+import '../data/models/event.dart';
 import '../data/models/folder.dart';
 import '../data/models/item.dart';
 import '../data/models/item_type.dart';
@@ -100,6 +101,19 @@ final messagesProvider = StreamProvider.family<List<TwinsMessage>, String>((ref,
 final recentMessagesProvider = StreamProvider.family<List<TwinsMessage>, String>((ref, spaceId) {
   final repo = ref.watch(repositoryProvider);
   return repo.watchRecentMessages(spaceId);
+});
+
+/// Every plan in the space, cancelled ones included, soonest first.
+final eventsProvider = StreamProvider.family<List<TwinsEvent>, String>((ref, spaceId) {
+  final repo = ref.watch(repositoryProvider);
+  return repo.watchEvents(spaceId);
+});
+
+/// Plans still to come, without the cancelled ones.
+final upcomingEventsProvider = Provider.family<List<TwinsEvent>, String>((ref, spaceId) {
+  final now = DateTime.now();
+  final events = ref.watch(eventsProvider(spaceId)).valueOrNull ?? const <TwinsEvent>[];
+  return events.where((e) => !e.isCancelled && e.isUpcoming(now)).toList();
 });
 
 class ReactionQuery {

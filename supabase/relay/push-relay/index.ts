@@ -26,6 +26,9 @@ type PushRequest = {
   route?: string;
   // Notifications sharing a key replace each other (one per chat, say).
   collapse?: string;
+  // Extra string fields for the app, e.g. a plan's time so the phone can set
+  // its own reminder alarm without opening the app.
+  data?: Record<string, string>;
 };
 
 const MAX_TOKENS = 10;
@@ -83,6 +86,17 @@ async function accessToken(account: ServiceAccount): Promise<string> {
   return cachedToken.value;
 }
 
+function messageData(payload: PushRequest): Record<string, string> {
+  const data: Record<string, string> = {};
+  if (payload.data && typeof payload.data === "object") {
+    for (const [key, value] of Object.entries(payload.data).slice(0, 12)) {
+      if (typeof value === "string") data[key.slice(0, 40)] = value.slice(0, 500);
+    }
+  }
+  if (payload.route) data.route = payload.route;
+  return data;
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
@@ -120,7 +134,7 @@ serve(async (req) => {
         message: {
           token,
           notification: { title: payload.title.slice(0, 120), body: payload.body.slice(0, 400) },
-          data: payload.route ? { route: payload.route } : {},
+          data: messageData(payload),
           android: {
             ttl: FCM_TTL,
             priority: "high",
