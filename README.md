@@ -187,6 +187,21 @@ transaction that always rolls back, so it is safe against the live project:
 psql "$SUPABASE_POOLER_CONNECTION_STRING" -v ON_ERROR_STOP=1 -f supabase/tests/pairing_rls_test.sql
 ```
 
+## Calendar and chat commands
+
+- **Calendar tab** (`events`, migration 0018): shared plans with a time or
+  all day, optional end, notes, a linked saved item and a reminder. Both
+  twins see and edit everything; calling a plan off keeps it (struck
+  through) so it can be brought back.
+- **Reminders** are alarms on each phone (`flutter_local_notifications`),
+  kept in line with the calendar while the app runs and set from the plan's
+  push when it's closed: nothing on the server runs on a timer.
+- **Chat**: swipe a message to reply. Commands: `/plan <what> <when>`,
+  `/remind`, `/today`, `/tomorrow`, `/week`, `/next`, `/cancel`, `/help`.
+  `<when>` understands things like `fri 8pm`, `tomorrow at 8`, `12/11`,
+  `nov 20th`, `8-11pm`, `in 2 hours`; add `!30m` / `!1h` / `!1d` for a
+  reminder or `!no` for none.
+
 ## Folders, selection and settings
 
 - An item can be in **several folders** (`items.folder_ids`, migration 0015).
@@ -197,7 +212,8 @@ psql "$SUPABASE_POOLER_CONNECTION_STRING" -v ON_ERROR_STOP=1 -f supabase/tests/p
   auto-named (1st/2nd/3rd message), which images the AI looks at
   (thumbnail / YouTube start, middle, end frames), and **Update server
   functions**, which redeploys the edge functions with a personal access
-  token after an app update changes them.
+  token after an app update changes them. **Clear data** wipes saved
+  items, folder contents, chats or everything (migration 0019).
 
 ## How incoming share works
 

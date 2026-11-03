@@ -2,6 +2,16 @@
 
 Audit date: 2026-11-01 (previous: 2026-09-17). Delta between what's claimed (README, state doc) and what's actually in the code.
 
+## ✅ Done (2026-11-03)
+
+- **Shared calendar** (`0018`) — the second tab is now Calendar: a month grid (dots green for your plans, pink for your twin's), the picked day's plans and what's coming up. Plans have a time or all-day, an optional end, notes, a linked saved item (item details → Plan it) and a reminder (none / at the time / 10 min … 1 day; default in Settings → Calendar). Editing, sending to a chat and calling off live on the plan's page (`/event/:id`). Home shows the next three under "Coming up". Verified on the phone.
+- **Reminders on both phones** — each phone sets its own alarm from the calendar (`lib/notifications/plan_reminders.dart`, alarm-clock mode because realme batched plain exact alarms by up to an hour); the twin's phone sets its alarm straight from the "X planned something" push, even with the app closed. Verified the alarm is set exactly on the phone; the actual ring and the twin's side are untested.
+- **Chat replies** — swipe a message right (or long-press → Reply); the bubble quotes the original and tapping the quote scrolls to it. Long-press also has reactions, Copy text and Make it a plan. Verified on the phone.
+- **Slash commands** — `/plan movie night fri 8pm !1h`, `/remind`, `/today`, `/tomorrow`, `/week`, `/next`, `/cancel`, `/help`. Suggestions show as you type `/`, and a live line above the composer says exactly what the plan will be before sending. The plan parser (`lib/utils/when_parser.dart`) handles weekdays, dates (day first), 12/24h and 20h30 times, ranges and "in 2 hours"; 12 tests. Verified on the phone.
+- **Saved page** (`/saved`, Everything → See all) — every saved thing with kind filters, Not in a folder, and multi-select. Folders stay at Folders → See all.
+- **Settings → Clear data** (`0019`) — clear all saved items (files included), empty all folders, clear all chats, or clear everything; each asks first.
+- **Message times** showed UTC; fixed.
+
 ## ✅ Done (2026-11-01)
 
 - **Self-serve setup from an empty Supabase project** — the setup screen probes the project, installs/updates the schema over a one-time connection string (`lib/data/supabase/project_setup.dart`), and deploys the three edge functions + `GROQ_API_KEY` with a one-time access token. Verified on a real phone against the live project: it applied `0014` and deployed all three functions.
