@@ -9,6 +9,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/models/folder.dart';
 import '../../data/models/item.dart';
+import '../../data/repositories/twins_repository.dart';
 import '../../notifications/push_notifications.dart';
 import '../../sharing/twin_invite.dart';
 import '../../state/ai_vision_provider.dart';
@@ -180,6 +181,16 @@ class SettingsScreen extends ConsumerWidget {
             _SettingsTile(icon: PhosphorIconsRegular.info, label: 'About ¡Twins!', onTap: () => _showAbout(context)),
             const _SettingsTile(icon: PhosphorIconsRegular.tag, label: 'Version', trailing: Text('1.0.0')),
           ]),
+          const SizedBox(height: TwinsSpacing.lg),
+          const _SectionLabel('Clear data'),
+          _SettingsGroup(children: [
+            for (final (scope, icon, label, warning) in _clearActions)
+              ListTile(
+                leading: Icon(icon, size: 22, color: TwinsColors.danger),
+                title: Text(label, style: const TextStyle(color: TwinsColors.danger)),
+                onTap: () => _clear(context, ref, scope, label, warning),
+              ),
+          ]),
           const SizedBox(height: TwinsSpacing.xl),
           TextButton(
             onPressed: () async {
@@ -196,6 +207,54 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  static const _clearActions = [
+    (
+      ClearScope.items,
+      PhosphorIconsRegular.filmSlate,
+      'Clear all saved items',
+      'Every reel, video, link, note and file either of you saved, with their comments.',
+    ),
+    (
+      ClearScope.folders,
+      PhosphorIconsRegular.folderDashed,
+      'Empty all folders',
+      'Everything is taken out of its folders. The folders and what you saved both stay.',
+    ),
+    (
+      ClearScope.chats,
+      PhosphorIconsRegular.chatsCircle,
+      'Clear all chats',
+      'Every chat and message, for both of you. Plans made in chat stay on the calendar.',
+    ),
+    (
+      ClearScope.all,
+      PhosphorIconsRegular.trash,
+      'Clear everything',
+      'Saved items, folders, chats, plans and tags, for both of you. Your accounts stay.',
+    ),
+  ];
+
+  Future<void> _clear(BuildContext context, WidgetRef ref, ClearScope scope, String label, String warning) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: '$label?',
+      message: "$warning This can't be undone. Export a backup first if you might want it back.",
+      confirmLabel: scope == ClearScope.folders ? 'Empty them' : 'Clear',
+    );
+    if (!confirmed) return;
+    final repo = ref.read(repositoryProvider);
+    final space = await repo.currentSpace();
+    if (space == null) return;
+    try {
+      await repo.clearSpace(space.id, scope);
+      if (context.mounted) showTwinsToast(context, scope == ClearScope.folders ? 'Folders emptied' : 'Cleared');
+    } catch (_) {
+      if (context.mounted) {
+        showTwinsToast(context, "Couldn't clear that. Is the server up to date? (Server → Update)", isError: true);
+      }
+    }
   }
 
   Future<void> _exportSpace(BuildContext context, WidgetRef ref) async {

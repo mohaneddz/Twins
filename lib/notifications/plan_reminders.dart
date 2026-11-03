@@ -144,7 +144,9 @@ class PlanReminders {
         id: _idFor(eventId),
         scheduledDate: when,
         notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        // Plain exact alarms get pushed back up to an hour on some phones
+        // (realme, for one); alarm-clock ones always ring on time.
+        androidScheduleMode: AndroidScheduleMode.alarmClock,
         title: '⏰ $title',
         body: body,
         payload: '$_routePrefix$eventId',

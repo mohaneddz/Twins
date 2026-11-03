@@ -209,7 +209,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           minLines: 1,
                           maxLines: 5,
                           textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(hintText: 'Say something, or / for commands'),
+                          decoration: const InputDecoration(hintText: 'Message, or / for commands'),
                           textInputAction: TextInputAction.send,
                           onSubmitted: (_) => _send(space.id),
                         ),

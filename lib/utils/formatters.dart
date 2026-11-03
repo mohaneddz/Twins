@@ -16,7 +16,9 @@ String formatRelativeTime(DateTime dt) {
   return '${dt.month}/${dt.day}/${dt.year}';
 }
 
-String formatClockTime(DateTime dt) {
+String formatClockTime(DateTime time) {
+  // Rows come back from the server in UTC.
+  final dt = time.toLocal();
   final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
   final minute = dt.minute.toString().padLeft(2, '0');
   final period = dt.hour >= 12 ? 'PM' : 'AM';
