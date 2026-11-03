@@ -4,6 +4,9 @@ class Profile {
   final String username;
   final String? avatarUrl;
   final String? bio;
+
+  /// Key of the colour this twin picked (see TwinColor); 'miku' by default.
+  final String themeColor;
   final DateTime createdAt;
 
   const Profile({
@@ -12,6 +15,7 @@ class Profile {
     required this.username,
     this.avatarUrl,
     this.bio,
+    this.themeColor = 'miku',
     required this.createdAt,
   });
 
@@ -20,6 +24,7 @@ class Profile {
     String? username,
     String? avatarUrl,
     String? bio,
+    String? themeColor,
   }) {
     return Profile(
       id: id,
@@ -27,6 +32,7 @@ class Profile {
       username: username ?? this.username,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       bio: bio ?? this.bio,
+      themeColor: themeColor ?? this.themeColor,
       createdAt: createdAt,
     );
   }
@@ -37,6 +43,7 @@ class Profile {
         username: json['username'] as String? ?? 'twin',
         avatarUrl: json['avatar_path'] as String?,
         bio: json['bio'] as String?,
+        themeColor: json['theme_color'] as String? ?? 'miku',
         createdAt: DateTime.parse(json['created_at'] as String),
       );
 
@@ -46,5 +53,6 @@ class Profile {
         'username': username,
         'avatar_path': avatarUrl,
         'bio': bio,
+        'theme_color': themeColor,
       };
 }

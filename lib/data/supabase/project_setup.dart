@@ -10,7 +10,7 @@ import 'package:postgres/postgres.dart';
 
 /// Schema version this build of the app expects; must match the number
 /// returned by `twins_schema_version()` in the newest migration.
-const requiredSchemaVersion = 19;
+const requiredSchemaVersion = 20;
 
 const edgeFunctions = ['resolve-link', 'suggest-tags', 'name-chat', 'notify'];
 

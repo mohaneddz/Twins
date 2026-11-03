@@ -42,7 +42,7 @@ abstract class TwinsRepository {
 
   /// Changes the signed-in user's own password (no reset email needed).
   Future<void> updatePassword(String newPassword);
-  Future<Profile> updateProfile({String? displayName, String? username, String? bio, String? avatarUrl});
+  Future<Profile> updateProfile({String? displayName, String? username, String? bio, String? avatarUrl, String? themeColor});
 
   // ---- Space ----
   Future<TwinsSpace?> currentSpace();

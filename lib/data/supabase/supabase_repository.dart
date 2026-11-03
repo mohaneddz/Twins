@@ -132,13 +132,14 @@ class SupabaseTwinsRepository implements TwinsRepository {
   }
 
   @override
-  Future<Profile> updateProfile({String? displayName, String? username, String? bio, String? avatarUrl}) async {
+  Future<Profile> updateProfile({String? displayName, String? username, String? bio, String? avatarUrl, String? themeColor}) async {
     final userId = supa.auth.currentUser!.id;
     final payload = <String, dynamic>{
       if (displayName != null) 'display_name': displayName,
       if (username != null) 'username': username,
       if (bio != null) 'bio': bio,
       if (avatarUrl != null) 'avatar_path': avatarUrl,
+      if (themeColor != null) 'theme_color': themeColor,
     };
     if (payload.isEmpty) return _cachedProfile!;
     final row = await supa.from('profiles').update(payload).eq('id', userId).select().single();
