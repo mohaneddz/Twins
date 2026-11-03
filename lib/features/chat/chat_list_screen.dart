@@ -178,7 +178,7 @@ class _ChatTile extends ConsumerWidget {
       subtitle: messages == null
           ? null
           : Text(
-              last == null ? 'No messages yet' : (last.body.isNotEmpty ? last.body : 'Shared an item'),
+              last == null ? 'No messages yet' : (last.body.isNotEmpty ? last.body : last.attachedEventId != null ? '📅 Made a plan' : 'Shared an item'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TwinsTypography.body(palette.textSecondary, size: 13),
