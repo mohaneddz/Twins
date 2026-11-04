@@ -12,16 +12,16 @@ followers, no feed: just the two of you, on your own Supabase project.
 
 ## Tech Used
 
-![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
-![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
-![Riverpod](https://img.shields.io/badge/Riverpod-00B3A4?style=for-the-badge)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Deno](https://img.shields.io/badge/Deno-000000?style=for-the-badge&logo=deno&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase_Messaging-DD2C00?style=for-the-badge&logo=firebase&logoColor=white)
-![Groq](https://img.shields.io/badge/Groq-F55036?style=for-the-badge)
-![Android](https://img.shields.io/badge/Android-34A853?style=for-the-badge&logo=android&logoColor=white)
-[![Release](https://img.shields.io/github/v/release/mohaneddz/Twins?style=for-the-badge)](https://github.com/mohaneddz/Twins/releases/latest)
+![Flutter](https://img.shields.io/badge/Flutter-00B3A4?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3D9BE9?style=for-the-badge&logo=dart&logoColor=white)
+![Riverpod](https://img.shields.io/badge/Riverpod-8E7CF0?style=for-the-badge)
+![Supabase](https://img.shields.io/badge/Supabase-00B3A4?style=for-the-badge&logo=supabase&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-3D9BE9?style=for-the-badge&logo=postgresql&logoColor=white)
+![Deno](https://img.shields.io/badge/Deno-0F172A?style=for-the-badge&logo=deno&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase_Messaging-F08A4B?style=for-the-badge&logo=firebase&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-F06AB4?style=for-the-badge)
+![Android](https://img.shields.io/badge/Android-8E7CF0?style=for-the-badge&logo=android&logoColor=white)
+[![Release](https://img.shields.io/github/v/release/mohaneddz/Twins?style=for-the-badge&color=00B3A4)](https://github.com/mohaneddz/Twins/releases/latest)
 
 ---
 
