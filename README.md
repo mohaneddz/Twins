@@ -18,15 +18,11 @@ feed, no discovery.
 Screenshots from the app on a phone (v1.0.0). Green is one twin and lavender
 the other: each picks their own colour, and everything they make shows in it.
 
-| Home | Calendar |
-| --- | --- |
-| <img src="docs/screenshots/home.webp" alt="Home: coming-up plans, folders and recently added posts" width="260" /> | <img src="docs/screenshots/calendar.webp" alt="Calendar month view with each twin's plans as coloured dots" width="260" /> |
-| Plans in chat | Chat commands |
-| <img src="docs/screenshots/chat_plans.webp" alt="Chat with plan cards, two of them called off" width="260" /> | <img src="docs/screenshots/chat_commands.webp" alt="Typing / in chat lists the calendar commands" width="260" /> |
-| Saved post | Everything saved |
-| <img src="docs/screenshots/item_detail.webp" alt="A saved TikTok with its AI description" width="260" /> | <img src="docs/screenshots/saved.webp" alt="All saved posts, each with a stripe in the colour of the twin who saved it" width="260" /> |
-| Profile | Our colours |
-| <img src="docs/screenshots/profile.webp" alt="Profile with the twin's card" width="260" /> | <img src="docs/screenshots/settings_colours.webp" alt="Settings: picking a colour for the app" width="260" /> |
+| Home | Calendar | Plans in chat | Chat commands |
+| --- | --- | --- | --- |
+| <img src="docs/screenshots/home.webp" alt="Home: coming-up plans, folders and recently added posts" width="200" /> | <img src="docs/screenshots/calendar.webp" alt="Calendar month view with each twin's plans as coloured dots" width="200" /> | <img src="docs/screenshots/chat_plans.webp" alt="Chat with plan cards, two of them called off" width="200" /> | <img src="docs/screenshots/chat_commands.webp" alt="Typing / in chat lists the calendar commands" width="200" /> |
+| Saved post | Everything saved | Profile | Our colours |
+| <img src="docs/screenshots/item_detail.webp" alt="A saved TikTok with its AI description" width="200" /> | <img src="docs/screenshots/saved.webp" alt="All saved posts, each with a stripe in the colour of the twin who saved it" width="200" /> | <img src="docs/screenshots/profile.webp" alt="Profile with the twin's card" width="200" /> | <img src="docs/screenshots/settings_colours.webp" alt="Settings: picking a colour for the app" width="200" /> |
 
 The original design mockups are in [design/](design/).
 
