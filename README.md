@@ -1,3 +1,5 @@
+![Twins cover](screenshots/cover.avif)
+
 <h1>
   <img src="assets/icon_no_bg.png" alt="¡Twins! icon" width="50" />
   ¡Twins!
